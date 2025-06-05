@@ -1,0 +1,399 @@
+/* General Container Styles */
+.container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  background-color: #FAFAFA;
+  height: 100vh; /* Ensure full height */
+  box-sizing: border-box;
+}
+
+/* Loading and Error States */
+.loadingContainer, .errorContainer {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+.loadingText, .errorText {
+  font-size: 18px;
+  color: #555;
+}
+.errorContainer button { /* Basic button styling */
+  margin-top: 15px;
+  padding: 10px 20px;
+  background-color: #8B5CF6;
+  color: white;
+  border-radius: 5px;
+}
+
+/* Header */
+.header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 16px 20px;
+  background-color: #FFF;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: #E2E8F0;
+}
+.backButton {
+  padding: 8px;
+}
+.backButtonText {
+  font-size: 24px;
+  color: #2D3748;
+}
+.headerTitle {
+  flex: 1;
+  font-size: 17px; /* Adjusted from 18px to better fit typical MP nav */
+  font-weight: 600;
+  color: #2D3748;
+  text-align: center;
+}
+.placeholderView { /* To balance the back button for centering title */
+  width: 40px; 
+  height: 24px;
+}
+
+/* Pose Display */
+.poseContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; /* Center content vertically */
+  padding: 20px;
+}
+.poseImg, .skeletonImg {
+  width: 100%;
+  max-width: 360px; /* Added max-width for better control on larger screens */
+  height: auto;     /* Ensures aspect ratio is maintained with width adjustments */
+  display: block;   /* Allows margin auto to work for centering */
+  margin: 0 auto 16px auto; /* Centers the block and adds bottom margin */
+}
+.poseName {
+  font-size: 24px;
+  font-weight: bold;
+  color: #2D3748;
+  margin-bottom: 10px;
+}
+.poseInstructions {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #4A5568;
+  text-align: center;
+  margin-bottom: 15px;
+  max-height: 100px; /* Limit instruction height */
+  overflow-y: auto; /* Scroll for long instructions */
+}
+.timerText {
+  font-size: 36px;
+  font-weight: bold;
+  color: #8B5CF6;
+  margin-bottom: 20px;
+}
+
+/* Controls */
+.controlsContainer {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+  padding: 20px;
+  background-color: #FFF;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: #E2E8F0;
+  flex-wrap: wrap; /* Allow wrapping for multiple buttons */
+  gap: 10px; /* Space between buttons */
+}
+.controlButton {
+  padding: 15px 25px;
+  background-color: #F0F0F0; /* Lighter for non-primary buttons */
+  border-radius: 30px; /* Circular/pill shape */
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.controlButtonText {
+  font-size: 20px; /* Adjust for icon-like text */
+  color: #333;
+}
+/* Highlight for main play/pause button */
+.controlButton:nth-child(1) { 
+  background-color: #8B5CF6;
+}
+.controlButton:nth-child(1) .controlButtonText {
+  color: #FFF;
+}
+
+/* Specific styles for control-btn and upload-btn */
+.control-btn {
+  padding: 12px 20px;
+  background-color: #F0F0F0;
+  border-radius: 25px;
+  transition: background-color 0.2s ease;
+}
+.control-btn:active {
+  background-color: #E0E0E0;
+}
+.upload-btn {
+  background-color: #10B981; /* Green color for upload button */
+  flex: 1;
+  max-width: 180px;
+  min-width: 140px;
+}
+.upload-btn .controlButtonText {
+  color: #FFF;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.camBtn {
+  background: none;
+  border: none;
+  padding: 10px 15px; /* Keep similar padding to other control buttons for touch area */
+  margin: 0 15px;   /* Keep similar margin */
+  line-height: 1;   /* Helps if there's any residual text height */
+}
+
+.camIcon {
+  width: 32px;
+  height: 32px;
+  display: block; 
+}
+
+/* Modal Styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Camera Modal */
+.cameraModalContainer {
+  width: 90%;
+  max-width: 500px;
+  background-color: #FFF;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.cameraHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+.cameraTitle {
+  font-size: 18px;
+  font-weight: bold;
+}
+.cameraToggleButton {
+  background: none;
+  border: 1px solid #8B5CF6;
+  border-radius: 5px;
+  padding: 5px 10px;
+  font-size: 16px;
+  color: #8B5CF6;
+}
+.closeButton {
+  padding: 5px;
+}
+.closeButtonText {
+  font-size: 20px;
+  color: #555;
+}
+.cameraView { /* Style for the camera component itself */
+  width: 100%;
+  height: 300px; /* Default height, can be adjusted */
+  margin-bottom: 15px;
+  background-color: #000; /* Placeholder background */
+}
+.cameraActionButton {
+  display: block; /* Make buttons take full width or style as inline-block */
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #FFF;
+  background-color: #8B5CF6;
+  border-radius: 8px;
+  text-align: center;
+  margin-top: 10px;
+  border: none;
+}
+.cameraActionButton.recording {
+  background-color: #EF4444; /* Red for recording */
+}
+.cameraActionButton.secondary {
+  background-color: #A0A0A0;
+}
+.cameraActionButton:disabled {
+  opacity: 0.6;
+  background-color: #C0C0C0;
+}
+.videoPreviewContainer {
+  margin-top: 15px;
+  padding: 10px;
+  background-color: #f3f3f3;
+  border-radius: 8px;
+}
+.previewText {
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 5px;
+}
+.videoPathText {
+  font-size: 12px;
+  color: #666;
+  word-break: break-all;
+  margin-bottom: 10px;
+}
+.videoActions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px; /* If gap is not supported, use margins */
+}
+.videoActions .cameraActionButton {
+  flex: 1;
+}
+.uploadingIndicator {
+  margin-top: 10px;
+}
+.uploadingIndicator text{
+  display: block;
+  text-align: center;
+  font-size: 16px;
+  color: #8B5CF6;
+  padding: 10px;
+}
+
+/* Frame Processing Indicator */
+.frameProcessingIndicator {
+  margin-top: 15px;
+  padding: 15px;
+  background-color: #F3F4F6;
+  border-radius: 8px;
+  text-align: center;
+}
+.frameProcessingIndicator text {
+  font-size: 16px;
+  color: #6B7280;
+}
+
+/* Score Modal */
+.scoreModalContainer {
+  width: 80%;
+  max-width: 400px;
+  background-color: #FFF;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  text-align: center;
+}
+.scoreModalTitle {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+.scoreDisplay {
+  margin-bottom: 20px;
+}
+.scoreText {
+  font-size: 36px;
+  font-weight: bold;
+  color: #8B5CF6;
+  margin-bottom: 5px;
+  display: block;
+}
+.scoreFeedback {
+  font-size: 14px;
+  color: #4A5568;
+  line-height: 1.5;
+  display: block;
+}
+.scoreSkeletonImage {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.noSkeletonImageText {
+  font-size: 14px;
+  color: #9CA3AF;
+  margin: 20px 0;
+  display: block;
+}
+.starRating {
+  font-size: 24px; /* Size of stars */
+  margin-bottom: 25px;
+}
+.star {
+  color: #D1D5DB; /* Empty star color */
+  margin: 0 2px;
+  display: inline-block;
+}
+.star.filled {
+  color: #FBBF24; /* Filled star color */
+}
+/* Use cameraActionButton style for close button in score modal too */
+.scoreModalContainer .cameraActionButton {
+  background-color: #6B7280; /* A neutral color for "Close" */
+}
+
+/* Top Frames Container */
+.topFramesContainer {
+  padding: 20px;
+  background-color: #FFF;
+  margin-top: 10px;
+}
+.topFramesTitle {
+  font-size: 18px;
+  font-weight: bold;
+  color: #2D3748;
+  margin-bottom: 15px;
+  display: block;
+}
+.frameResultItem {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 15px;
+  background-color: #F9FAFB;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.frameSkeletonImage {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  margin-right: 15px;
+  object-fit: cover;
+}
+.frameInfo {
+  flex: 1;
+}
+.frameScore {
+  font-size: 16px;
+  font-weight: 600;
+  color: #8B5CF6;
+  margin-bottom: 5px;
+  display: block;
+}
+.frameFeedback {
+  font-size: 14px;
+  color: #4A5568;
+  line-height: 1.4;
+  display: block;
+}
