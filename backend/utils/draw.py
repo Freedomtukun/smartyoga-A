@@ -6,11 +6,12 @@
 
 import io
 import logging
-from typing import Dict, List, Tuple, Optional, Any
+from typing import Dict, List, Tuple, Optional, Any, Union
 from dataclasses import dataclass
 from enum import Enum
 from PIL import Image, ImageDraw
 from io import BytesIO
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,6 @@ class SkeletonFormat(Enum):
     """支持的骨架格式枚举"""
     COCO_17 = "coco_17"
     MOVENET_17 = "movenet_17"
-    # 预留更多格式
     OPENPOSE_25 = "openpose_25"
     MEDIAPIPE_33 = "mediapipe_33"
 
@@ -47,22 +47,33 @@ class DrawConfig:
     # 验证配置
     strict_validation: bool = False  # 是否严格验证所有关键点
     min_keypoints_ratio: float = 0.3  # 最少需要的有效关键点比例
+    
+    # 背景配置
+    background_color: Tuple[int, int, int, int] = (255, 255, 255, 0)  # 透明背景
+    use_original_image: bool = True  # 是否使用原图作为背景
 
 
 # 骨架连接定义
 SKELETON_CONNECTIONS = {
     SkeletonFormat.COCO_17: [
+        # 头部连接
         ("nose", "left_eye"), ("nose", "right_eye"),
         ("left_eye", "left_ear"), ("right_eye", "right_ear"),
+        # 躯干连接
         ("left_shoulder", "right_shoulder"),
-        ("left_shoulder", "left_elbow"), ("left_elbow", "left_wrist"),
-        ("right_shoulder", "right_elbow"), ("right_elbow", "right_wrist"),
         ("left_shoulder", "left_hip"), ("right_shoulder", "right_hip"),
         ("left_hip", "right_hip"),
+        # 左臂连接
+        ("left_shoulder", "left_elbow"), ("left_elbow", "left_wrist"),
+        # 右臂连接
+        ("right_shoulder", "right_elbow"), ("right_elbow", "right_wrist"),
+        # 左腿连接
         ("left_hip", "left_knee"), ("left_knee", "left_ankle"),
+        # 右腿连接
         ("right_hip", "right_knee"), ("right_knee", "right_ankle"),
     ],
     SkeletonFormat.MOVENET_17: [
+        # 与COCO_17相同
         ("nose", "left_eye"), ("nose", "right_eye"),
         ("left_eye", "left_ear"), ("right_eye", "right_ear"),
         ("left_shoulder", "right_shoulder"),
@@ -110,22 +121,23 @@ def _normalize_keypoint(x: float, y: float, width: int, height: int) -> Optional
 
 
 def draw_skeleton(
-    image_bytes: bytes, 
-    keypoints: Dict[str, List[float]], 
+    image_bytes: Optional[bytes] = None,
+    keypoints: Dict[str, List[float]] = None,
     config: Optional[DrawConfig] = None,
-    skeleton_format: SkeletonFormat = SkeletonFormat.COCO_17
+    skeleton_format: SkeletonFormat = SkeletonFormat.COCO_17,
+    image_size: Optional[Tuple[int, int]] = None
 ) -> BytesIO:
     """
-    在透明背景上绘制人体骨架
+    在透明背景或原图上绘制人体骨架
     
-    此函数仅用于 API 端到端图片流转，不生成任何磁盘文件，不保证物理存储
+    此函数仅用于 API 端到端图片流转，不生成任何磁盘文件
     
     Args:
-        image_bytes: 原始图片数据
+        image_bytes: 原始图片数据（可选）
         keypoints: 关键点字典，格式为 {关键点名: [归一化x, 归一化y]}
-                  归一化坐标范围为 [0, 1]
         config: 绘制配置，为 None 时使用默认配置
-        skeleton_format: 骨架格式，默认为 COCO_17
+        skeleton_format: 骨架格式
+        image_size: 当不提供image_bytes时，指定输出图片尺寸 (width, height)
     
     Returns:
         BytesIO: 包含骨架图PNG数据的缓冲区
@@ -136,14 +148,40 @@ def draw_skeleton(
     if config is None:
         config = DrawConfig()
     
+    if keypoints is None:
+        raise SkeletonDrawError("关键点数据不能为空")
+    
     try:
-        # 打开原始图片获取尺寸
-        try:
-            original_img = Image.open(io.BytesIO(image_bytes))
-            width, height = original_img.size
-            logger.debug(f"Original image size: {width}x{height}")
-        except Exception as e:
-            raise SkeletonDrawError(f"无法打开输入图像: {str(e)}")
+        # 确定图片尺寸
+        if image_bytes and config.use_original_image:
+            # 使用原图作为背景
+            try:
+                original_img = Image.open(io.BytesIO(image_bytes))
+                if original_img.mode != 'RGBA':
+                    original_img = original_img.convert('RGBA')
+                width, height = original_img.size
+                skeleton_img = original_img.copy()
+                logger.debug(f"Using original image as background: {width}x{height}")
+            except Exception as e:
+                raise SkeletonDrawError(f"无法打开输入图像: {str(e)}")
+        else:
+            # 创建新的透明背景图片
+            if image_size:
+                width, height = image_size
+            elif image_bytes:
+                # 从image_bytes获取尺寸但不使用原图
+                try:
+                    temp_img = Image.open(io.BytesIO(image_bytes))
+                    width, height = temp_img.size
+                    temp_img.close()
+                except Exception as e:
+                    raise SkeletonDrawError(f"无法获取图像尺寸: {str(e)}")
+            else:
+                # 默认尺寸
+                width, height = 256, 256
+                
+            skeleton_img = Image.new("RGBA", (width, height), config.background_color)
+            logger.debug(f"Created new image with size: {width}x{height}")
         
         # 验证图像尺寸
         _validate_image_size(width, height, config.max_image_size)
@@ -154,8 +192,7 @@ def draw_skeleton(
         
         skeleton_connections = SKELETON_CONNECTIONS[skeleton_format]
         
-        # 创建透明背景的图片
-        skeleton_img = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+        # 创建绘图对象
         draw = ImageDraw.Draw(skeleton_img, 'RGBA')
         
         # 将归一化坐标转换为像素坐标
@@ -186,16 +223,30 @@ def draw_skeleton(
         
         logger.info(f"关键点转换完成: {len(pixel_keypoints)}/{len(keypoints)} 有效")
         
-        # 绘制骨架连接线
+        # 绘制骨架连接线（先画线，后画点，避免线覆盖点）
         connections_drawn = 0
         for start, end in skeleton_connections:
             if start in pixel_keypoints and end in pixel_keypoints:
                 try:
-                    draw.line(
-                        [pixel_keypoints[start], pixel_keypoints[end]], 
-                        fill=config.line_color, 
-                        width=config.line_width
-                    )
+                    start_point = pixel_keypoints[start]
+                    end_point = pixel_keypoints[end]
+                    
+                    # 如果启用抗锯齿，使用多次绘制实现
+                    if config.enable_antialiasing and config.line_width > 1:
+                        # 绘制多条稍微偏移的线来模拟抗锯齿
+                        for offset in [-0.5, 0, 0.5]:
+                            draw.line(
+                                [(start_point[0] + offset, start_point[1]), 
+                                 (end_point[0] + offset, end_point[1])],
+                                fill=config.line_color,
+                                width=config.line_width
+                            )
+                    else:
+                        draw.line(
+                            [start_point, end_point],
+                            fill=config.line_color,
+                            width=config.line_width
+                        )
                     connections_drawn += 1
                 except Exception as e:
                     logger.warning(f"绘制连接线失败 {start}->{end}: {e}")
@@ -206,13 +257,22 @@ def draw_skeleton(
         points_drawn = 0
         for name, (x, y) in pixel_keypoints.items():
             try:
-                bbox = [
-                    x - config.point_radius, 
-                    y - config.point_radius, 
-                    x + config.point_radius, 
-                    y + config.point_radius
-                ]
-                draw.ellipse(bbox, fill=config.point_color)
+                if config.enable_antialiasing:
+                    # 使用渐变圆实现抗锯齿效果
+                    for r in range(config.point_radius, 0, -1):
+                        alpha = int(255 * (r / config.point_radius))
+                        color = (config.point_color[0], config.point_color[1], 
+                                config.point_color[2], alpha)
+                        bbox = [x - r, y - r, x + r, y + r]
+                        draw.ellipse(bbox, fill=color)
+                else:
+                    bbox = [
+                        x - config.point_radius,
+                        y - config.point_radius,
+                        x + config.point_radius,
+                        y + config.point_radius
+                    ]
+                    draw.ellipse(bbox, fill=config.point_color)
                 points_drawn += 1
             except Exception as e:
                 logger.warning(f"绘制关键点失败 {name} at ({x}, {y}): {e}")
@@ -224,8 +284,8 @@ def draw_skeleton(
         try:
             # 使用优化参数保存PNG
             skeleton_img.save(
-                buffer, 
-                format="PNG", 
+                buffer,
+                format="PNG",
                 optimize=True,
                 compress_level=6  # 平衡压缩率和速度
             )
@@ -238,17 +298,7 @@ def draw_skeleton(
         if buffer_size == 0:
             raise SkeletonDrawError("生成的骨架图数据为空")
         
-        # 验证PNG格式
         buffer.seek(0)
-        try:
-            test_img = Image.open(buffer)
-            if test_img.format != 'PNG':
-                raise SkeletonDrawError(f"生成的图片格式错误: {test_img.format}")
-            test_img.close()  # 显式关闭避免内存泄漏
-        except Exception as e:
-            raise SkeletonDrawError(f"生成的骨架图格式验证失败: {str(e)}")
-        
-        buffer.seek(0)  # 重置指针到开始位置
         logger.info(
             f"骨架图生成成功: {buffer_size} bytes, "
             f"{connections_drawn} 连接线, {points_drawn} 关键点"
@@ -259,12 +309,42 @@ def draw_skeleton(
     except SkeletonDrawError:
         raise
     except Exception as e:
-        logger.error(f"骨架绘制出现未预期错误: {e}")
+        logger.error(f"骨架绘制出现未预期错误: {e}", exc_info=True)
         raise SkeletonDrawError(f"骨架图绘制失败: {str(e)}")
 
 
+def draw_coco_skeleton(keypoints: Dict[str, List[float]], size: int = 256) -> BytesIO:
+    """
+    便捷函数：绘制COCO格式骨架图
+    
+    Args:
+        keypoints: 归一化坐标的关键点字典
+        size: 输出图片尺寸（正方形）
+        
+    Returns:
+        BytesIO: 包含骨架PNG图片的内存缓冲区
+    """
+    config = DrawConfig(
+        line_color=(0, 255, 0, 255),  # 绿色连接线
+        line_width=3,
+        point_color=(255, 0, 0, 255),  # 红色关键点
+        point_radius=5,
+        background_color=(255, 255, 255, 0),  # 透明背景
+        use_original_image=False,
+        enable_antialiasing=True
+    )
+    
+    return draw_skeleton(
+        image_bytes=None,
+        keypoints=keypoints,
+        config=config,
+        skeleton_format=SkeletonFormat.COCO_17,
+        image_size=(size, size)
+    )
+
+
 def validate_keypoints(
-    keypoints: Dict[str, List[float]], 
+    keypoints: Dict[str, List[float]],
     skeleton_format: SkeletonFormat = SkeletonFormat.COCO_17
 ) -> Dict[str, List[str]]:
     """
@@ -306,7 +386,7 @@ def validate_keypoints(
 
 
 def get_skeleton_stats(
-    keypoints: Dict[str, List[float]], 
+    keypoints: Dict[str, List[float]],
     skeleton_format: SkeletonFormat = SkeletonFormat.COCO_17
 ) -> Dict[str, Any]:
     """
@@ -348,6 +428,41 @@ def get_skeleton_stats(
         "connection_rate": drawable_connections / total_possible_connections if total_possible_connections > 0 else 0,
         "validation_details": validation
     }
+
+
+def create_skeleton_overlay(
+    image_bytes: bytes,
+    keypoints: Dict[str, List[float]],
+    config: Optional[DrawConfig] = None,
+    skeleton_format: SkeletonFormat = SkeletonFormat.COCO_17,
+    alpha: float = 0.7
+) -> BytesIO:
+    """
+    在原图上叠加骨架，返回合成图
+    
+    Args:
+        image_bytes: 原始图片数据
+        keypoints: 关键点字典
+        config: 绘制配置
+        skeleton_format: 骨架格式
+        alpha: 骨架图层的透明度 (0-1)
+        
+    Returns:
+        BytesIO: 包含叠加骨架的图片
+    """
+    if config is None:
+        config = DrawConfig()
+    
+    # 先在原图上绘制骨架
+    config.use_original_image = True
+    skeleton_buffer = draw_skeleton(
+        image_bytes=image_bytes,
+        keypoints=keypoints,
+        config=config,
+        skeleton_format=skeleton_format
+    )
+    
+    return skeleton_buffer
 
 
 # 向后兼容的别名
