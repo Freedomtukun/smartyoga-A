@@ -73,5 +73,71 @@ angle_config = {
     }
 }
 
-# 获取所有支持的动作ID
-SUPPORTED_POSES = list(angle_config.keys())
+# Define Chinese names for poses
+pose_name_mapping = {
+    "mountain_pose": "山式",
+    "warrior_pose": "战士式",
+    "tree_pose": "树式",
+    "downward_dog": "下犬式",
+    "plank_pose": "平板支撑"
+}
+
+SUPPORTED_POSES = {}
+for pose_id, _ in angle_config.items():
+    name = pose_name_mapping.get(pose_id, f"{pose_id.replace('_', ' ').title()}式")
+    SUPPORTED_POSES[pose_id] = {
+        "id": pose_id,
+        "name": name,
+        "description": f"{name}的简要描述。",
+        "difficulty": "初级"
+    }
+
+def validate_supported_poses(supported_poses_data):
+    errors = []
+    if not isinstance(supported_poses_data, dict):
+        errors.append("SUPPORTED_POSES is not a dictionary.")
+        return errors  # Early exit if the main structure is wrong
+
+    for pose_key, pose_value in supported_poses_data.items():
+        if not isinstance(pose_key, str):
+            errors.append(f"Pose key '{pose_key}' is not a string.")
+
+        if not isinstance(pose_value, dict):
+            errors.append(f"Pose '{pose_key}': Value is not a dictionary.")
+            continue  # Skip further checks for this item if value is not a dict
+
+        # Check for 'id'
+        if "id" not in pose_value:
+            errors.append(f"Pose '{pose_key}': Missing 'id' field.")
+        elif pose_value["id"] != pose_key:
+            errors.append(f"Pose '{pose_key}': 'id' field ('{pose_value['id']}') does not match the pose key.")
+
+        # Check for 'name'
+        if "name" not in pose_value:
+            errors.append(f"Pose '{pose_key}': Missing 'name' field.")
+        elif not isinstance(pose_value.get("name"), str) or not pose_value.get("name"):
+            errors.append(f"Pose '{pose_key}': 'name' field must be a non-empty string.")
+
+        # Check for 'description'
+        if "description" not in pose_value:
+            errors.append(f"Pose '{pose_key}': Missing 'description' field.")
+        elif not isinstance(pose_value.get("description"), str) or not pose_value.get("description"):
+            errors.append(f"Pose '{pose_key}': 'description' field must be a non-empty string.")
+
+        # Check for 'difficulty'
+        if "difficulty" not in pose_value:
+            errors.append(f"Pose '{pose_key}': Missing 'difficulty' field.")
+        elif not isinstance(pose_value.get("difficulty"), str) or not pose_value.get("difficulty"):
+            errors.append(f"Pose '{pose_key}': 'difficulty' field must be a non-empty string.")
+
+    return errors
+
+# Validate the SUPPORTED_POSES configuration
+validation_errors = validate_supported_poses(SUPPORTED_POSES)
+
+if validation_errors:
+    print("SUPPORTED_POSES Configuration Errors:")
+    for error in validation_errors:
+        print(error)
+else:
+    print("SUPPORTED_POSES configuration is valid.")
