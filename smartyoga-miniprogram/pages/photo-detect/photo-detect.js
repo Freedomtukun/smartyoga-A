@@ -1,7 +1,7 @@
 // pages/photo-detect/photo-detect.js
-// 本次优化增加了体式选择功能（加载 poses.json、体式 picker 选择、onPoseChange 事件）
+// 本次优化增加了体式选择功能（加载 poses.js、体式 picker 选择、onPoseChange 事件）
 import { DETECT_POSE_URL } from '../../utils/yoga-api.js';
-const poses = require('../../assets/poses.json');
+const poses = require('../../assets/poses.js');
 
 Page({
   data: {
