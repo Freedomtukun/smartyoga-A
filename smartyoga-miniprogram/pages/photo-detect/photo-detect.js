@@ -1,4 +1,6 @@
 // pages/photo-detect/photo-detect.js
+import { DETECT_POSE_URL } from '../../utils/yoga-api.js';
+
 Page({
   data: {
     imageUrl: '', // 用户上传的图片
@@ -10,7 +12,8 @@ Page({
     skeletonUrl: '', // 骨架图
     score: 0, // 得分
     suggestions: '', // AI建议
-    poseId: 'yoga_pose_001' // 默认姿势ID
+    poseId: 'yoga_pose_001', // 默认姿势ID
+    isSaving: false // 保存中状态
   },
 
   onLoad(options) {
@@ -26,6 +29,13 @@ Page({
     wx.setNavigationBarTitle({
       title: '姿势检测'
     });
+  },
+
+  // 校验图片 URL 是否在白名单内
+  isValidImageUrl(url) {
+    if (!url) return false;
+    const whitelist = /^https:\/\/static\.yogasmart\.cn\//;
+    return whitelist.test(url) || /^wxfile:\/\//.test(url) || /^cloud:\/\//.test(url);
   },
 
   // 选择图片
@@ -44,23 +54,23 @@ Page({
       },
       fail: (err) => {
         console.error('选择图片失败', err);
+        wx.showToast({ title: '选择图片失败', icon: 'none' });
       }
     });
   },
 
-  // 开始检测
+  // 开始检测图片
   startDetection() {
+    // 未选择图片时给出提示
     if (!this.data.imageUrl) {
-      wx.showToast({
-        title: '请先选择图片',
-        icon: 'none'
-      });
+      wx.showToast({ title: '请先选择图片', icon: 'none' });
       return;
     }
 
-    this.setData({ 
+    // 开启检测状态，按钮进入 loading
+    this.setData({
       isDetecting: true,
-      hasError: false 
+      hasError: false
     });
 
     // 显示加载提示
@@ -71,7 +81,7 @@ Page({
 
     // 上传图片并检测
     wx.uploadFile({
-      url: `${getApp().globalData.baseUrl}/api/detect-pose-file`,
+      url: DETECT_POSE_URL,
       filePath: this.data.imageUrl,
       name: 'file',
       formData: {
@@ -82,13 +92,19 @@ Page({
       },
       success: (res) => {
         wx.hideLoading();
-        
+
         if (res.statusCode === 200) {
           try {
             const result = JSON.parse(res.data);
-            
+
             if (result.code === 'OK') {
-              // 检测成功，显示结果
+              // 验证返回的图片 URL 是否安全
+              if (!this.isValidImageUrl(result.skeletonUrl)) {
+                this.showError('返回的图片地址不安全');
+                return;
+              }
+
+              // 检测成功，展示结果
               this.setData({
                 isDetecting: false,
                 showResult: true,
@@ -99,6 +115,9 @@ Page({
 
               // 保存到缓存，方便结果页读取
               this.saveToCache();
+
+              // 滚动到结果区域
+              wx.pageScrollTo({ selector: '#resultSection', duration: 300 });
             } else {
               // 业务错误
               this.showError(result.msg || '检测失败，请重试');
@@ -108,7 +127,8 @@ Page({
             this.showError('服务器响应异常');
           }
         } else {
-          this.showError('网络请求失败');
+          // HTTP 错误
+          this.showError(`请求失败(${res.statusCode})`);
         }
       },
       fail: (err) => {
@@ -186,9 +206,8 @@ Page({
       return;
     }
 
-    wx.showLoading({
-      title: '保存中...'
-    });
+    this.setData({ isSaving: true });
+    wx.showLoading({ title: '保存中...' });
 
     // 获取保存权限
     wx.getSetting({
@@ -201,6 +220,7 @@ Page({
             },
             fail: () => {
               wx.hideLoading();
+              this.setData({ isSaving: false });
               wx.showModal({
                 title: '提示',
                 content: '需要您的相册权限才能保存图片',
@@ -223,37 +243,44 @@ Page({
 
   // 执行保存图片
   doSaveImage() {
-    wx.downloadFile({
-      url: this.data.skeletonUrl,
-      success: (res) => {
-        if (res.statusCode === 200) {
-          wx.saveImageToPhotosAlbum({
-            filePath: res.tempFilePath,
-            success: () => {
-              wx.hideLoading();
-              wx.showToast({
-                title: '保存成功',
-                icon: 'success'
-              });
-            },
-            fail: () => {
-              wx.hideLoading();
-              wx.showModal({
-                title: '保存失败',
-                content: '您也可以长按图片直接保存',
-                showCancel: false
-              });
-            }
-          });
-        }
-      },
-      fail: () => {
-        wx.hideLoading();
-        wx.showToast({
-          title: '下载图片失败',
-          icon: 'none'
-        });
-      }
+    const url = this.data.skeletonUrl;
+    const save = (filePath) => {
+      wx.saveImageToPhotosAlbum({
+        filePath,
+        success: () => {
+          this.setData({ isSaving: false });
+          wx.hideLoading();
+          wx.showToast({ title: '保存成功', icon: 'success' });
+        },
+        fail: this.handleSaveError
+      });
+    };
+
+    if (url.startsWith('http')) {
+      wx.downloadFile({
+        url,
+        success: (res) => {
+          if (res.statusCode === 200) {
+            save(res.tempFilePath);
+          } else {
+            this.handleSaveError();
+          }
+        },
+        fail: this.handleSaveError
+      });
+    } else {
+      save(url);
+    }
+  },
+
+  // 保存失败处理
+  handleSaveError() {
+    this.setData({ isSaving: false });
+    wx.hideLoading();
+    wx.showModal({
+      title: '保存失败',
+      content: '您也可以长按图片直接保存',
+      showCancel: false
     });
   },
 
@@ -271,7 +298,7 @@ Page({
 
   // 查看完整结果
   viewFullResult() {
-    wx.navigateTo({
+    wx.redirectTo({
       url: `/pages/result/result?imageUrl=${encodeURIComponent(this.data.skeletonUrl)}&score=${this.data.score}&suggestions=${encodeURIComponent(this.data.suggestions)}`
     });
   },
