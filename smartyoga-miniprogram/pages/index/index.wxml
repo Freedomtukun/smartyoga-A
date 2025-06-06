@@ -33,6 +33,21 @@
           <text class="buttonSubtext">放松身心</text>
         </view>
       </view>
+
+      <!-- Photo Upload Button -->
+      <view class="button" bindtap="handleUploadPhoto">
+        <view class="buttonGradient photoGradient">
+          <text class="buttonText">上传照片</text>
+          <text class="buttonSubtext">姿势检测</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- Display photo detection result -->
+    <view wx:if="{{photoResult}}" class="photoResult">
+      <image wx:if="{{photoResult.skeletonUrl}}" class="resultImage" src="{{photoResult.skeletonUrl}}" mode="widthFix" />
+      <text class="resultScore">得分: {{photoResult.score}}</text>
+      <text class="resultSuggestion">{{photoResult.suggestion}}</text>
     </view>
   </view>
 </view>
