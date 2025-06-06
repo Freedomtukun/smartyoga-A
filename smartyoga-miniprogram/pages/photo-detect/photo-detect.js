@@ -1,5 +1,7 @@
 // pages/photo-detect/photo-detect.js
+// 本次优化增加了体式选择功能（加载 poses.json、体式 picker 选择、onPoseChange 事件）
 import { DETECT_POSE_URL } from '../../utils/yoga-api.js';
+const poses = require('../../assets/poses.json');
 
 Page({
   data: {
@@ -12,15 +14,19 @@ Page({
     skeletonUrl: '', // 骨架图
     score: 0, // 得分
     suggestions: '', // AI建议
-    poseId: 'yoga_pose_001', // 默认姿势ID
+    poses: poses, // 体式列表
+    poseIndex: 0, // 当前选中体式下标
+    poseId: poses[0].id, // 默认姿势ID
     isSaving: false // 保存中状态
   },
 
   onLoad(options) {
     // 如果传入了姿势ID，使用传入的
     if (options.poseId) {
+      const index = this.data.poses.findIndex(p => p.id === options.poseId);
       this.setData({
-        poseId: options.poseId
+        poseId: options.poseId,
+        poseIndex: index >= 0 ? index : 0
       });
     }
   },
@@ -28,6 +34,16 @@ Page({
   onShow() {
     wx.setNavigationBarTitle({
       title: '姿势检测'
+    });
+  },
+
+  // 体式选择改变
+  onPoseChange(e) {
+    const index = e.detail.value;
+    const pose = this.data.poses[index];
+    this.setData({
+      poseIndex: index,
+      poseId: pose.id
     });
   },
 
