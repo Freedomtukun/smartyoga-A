@@ -1,4 +1,5 @@
 <!-- pages/photo-detect/photo-detect.wxml -->
+<!-- 本次优化增加了体式选择功能（加载 poses.json、体式 picker 选择、onPoseChange 事件） -->
 <view class="container">
   <!-- 错误提示 -->
   <view wx:if="{{hasError}}" class="error-container">
@@ -10,6 +11,10 @@
 
   <!-- 正常内容 -->
   <view wx:else class="content">
+    <picker range="{{poses}}" range-key="name" value="{{poseIndex}}" bindchange="onPoseChange">
+      <view class="pose-picker">选择体式</view>
+    </picker>
+    <view class="current-pose">当前体式：{{poses[poseIndex].name}}</view>
     <!-- 上传区域 -->
     <view wx:if="{{!showResult}}" class="upload-section">
       <!-- 图片预览区 -->
