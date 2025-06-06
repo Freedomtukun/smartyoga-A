@@ -13,4 +13,10 @@ Page({
       url: '/pages/meditation/index',
     });
   },
+
+  handlePhotoDetect() {
+    wx.navigateTo({
+      url: '/pages/photo-detect/index'
+    });
+  }
 });

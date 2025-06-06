@@ -33,6 +33,15 @@
           <text class="buttonSubtext">放松身心</text>
         </view>
       </view>
+
+      <!-- Photo Upload Button -->
+      <view class="button" bindtap="handlePhotoDetect">
+        <view class="buttonGradient photoGradient">
+          <text class="buttonText">上传照片</text>
+          <text class="buttonSubtext">姿势检测</text>
+        </view>
+      </view>
     </view>
+
   </view>
 </view>

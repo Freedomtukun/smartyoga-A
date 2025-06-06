@@ -1,0 +1,10 @@
+.container {
+  padding: 40px;
+  text-align: center;
+}
+.uploadBtn {
+  background-color: #8B5CF6;
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 8px;
+}

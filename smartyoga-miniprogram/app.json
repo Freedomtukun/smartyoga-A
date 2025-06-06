@@ -2,7 +2,9 @@
   "pages": [
     "pages/index/index",
     "pages/meditation/index",
-    "pages/sequence/index"
+    "pages/sequence/index",
+    "pages/photo-detect/index",
+    "pages/photo-result/index"
   ],
   "window": {
     "backgroundTextStyle": "light",

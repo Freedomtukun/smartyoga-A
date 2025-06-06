@@ -1,0 +1,3 @@
+<view class="container">
+  <button class="uploadBtn" bindtap="choosePhoto">上传姿势照片</button>
+</view>

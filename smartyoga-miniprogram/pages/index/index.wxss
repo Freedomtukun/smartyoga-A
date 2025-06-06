@@ -85,3 +85,8 @@
 .meditationGradient {
   background-image: linear-gradient(to bottom, #F8E8FF, #FCF0FF);
 }
+
+/* Gradient for photo upload button */
+.photoGradient {
+  background-image: linear-gradient(to bottom, #E0F7FF, #F0FBFF);
+}

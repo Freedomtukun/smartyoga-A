@@ -1,0 +1,6 @@
+<view class="container">
+  <image wx:if="{{skeletonUrl}}" class="resultImage" src="{{skeletonUrl}}" mode="widthFix" />
+  <text class="score">得分: {{score}}</text>
+  <text class="suggestion">{{suggestion}}</text>
+  <button open-type="share" class="shareBtn">分享结果</button>
+</view>
