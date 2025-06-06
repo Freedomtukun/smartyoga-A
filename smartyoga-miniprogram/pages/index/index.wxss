@@ -85,3 +85,31 @@
 .meditationGradient {
   background-image: linear-gradient(to bottom, #F8E8FF, #FCF0FF);
 }
+
+/* Gradient for photo upload button */
+.photoGradient {
+  background-image: linear-gradient(to bottom, #E0F7FF, #F0FBFF);
+}
+
+/* Photo detection result styles */
+.photoResult {
+  margin-top: 30px;
+  text-align: center;
+}
+
+.resultImage {
+  width: 90%;
+  display: block;
+  margin: 0 auto 10px auto;
+}
+
+.resultScore {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.resultSuggestion {
+  font-size: 16px;
+  color: #4A5568;
+}
