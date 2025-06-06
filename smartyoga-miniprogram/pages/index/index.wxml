@@ -1,0 +1,53 @@
+<view class="container">
+  <view class="content">
+    <view class="header">
+      <text class="title">智能瑜伽训练</text>
+      <text class="subtitle">开始您的瑜伽之旅</text>
+    </view>
+
+    <view class="buttonContainer">
+      <view class="button" bindtap="handleSequencePress" data-level="beginner">
+        <view class="buttonGradient beginnerGradient">
+          <text class="buttonText">初学者序列</text>
+          <text class="buttonSubtext">适合瑜伽新手</text>
+        </view>
+      </view>
+
+      <view class="button" bindtap="handleSequencePress" data-level="intermediate">
+        <view class="buttonGradient intermediateGradient">
+          <text class="buttonText">中级序列</text>
+          <text class="buttonSubtext">提升您的练习</text>
+        </view>
+      </view>
+
+      <view class="button" bindtap="handleSequencePress" data-level="advanced">
+        <view class="buttonGradient advancedGradient">
+          <text class="buttonText">高级序列</text>
+          <text class="buttonSubtext">挑战您的极限</text>
+        </view>
+      </view>
+
+      <view class="button" bindtap="handleMeditationPress">
+        <view class="buttonGradient meditationGradient">
+          <text class="buttonText">冥想</text>
+          <text class="buttonSubtext">放松身心</text>
+        </view>
+      </view>
+
+      <!-- Photo Upload Button -->
+      <view class="button" bindtap="handleUploadPhoto">
+        <view class="buttonGradient photoGradient">
+          <text class="buttonText">上传照片</text>
+          <text class="buttonSubtext">姿势检测</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- Display photo detection result -->
+    <view wx:if="{{photoResult}}" class="photoResult">
+      <image wx:if="{{photoResult.skeletonUrl}}" class="resultImage" src="{{photoResult.skeletonUrl}}" mode="widthFix" />
+      <text class="resultScore">得分: {{photoResult.score}}</text>
+      <text class="resultSuggestion">{{photoResult.suggestion}}</text>
+    </view>
+  </view>
+</view>

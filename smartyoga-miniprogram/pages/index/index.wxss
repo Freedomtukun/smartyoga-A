@@ -1,0 +1,115 @@
+.container {
+  display: flex;
+  flex: 1;
+  background-color: #FAFAFA;
+  /* For full page flex, might need height: 100vh and box-sizing */
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+.content {
+  display: flex;
+  flex: 1;
+  flex-direction: column; /* Added to manage layout */
+  padding-left: 24px;
+  padding-right: 24px;
+  padding-top: 60px;
+}
+
+.header {
+  display: flex; /* Added for centering */
+  flex-direction: column; /* Added for centering text */
+  align-items: center;
+  margin-bottom: 60px;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 600;
+  color: #2D3748;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 16px;
+  color: #718096;
+}
+
+.buttonContainer {
+  display: flex;
+  flex-direction: column; /* Added to stack buttons */
+  gap: 20px; /* If gap is not supported, use margin-bottom on .button */
+}
+
+.button {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.buttonGradient {
+  padding-top: 24px;
+  padding-bottom: 24px;
+  padding-left: 20px;
+  padding-right: 20px;
+  display: flex; /* Added for centering text */
+  flex-direction: column; /* Added for centering text */
+  align-items: center;
+}
+
+.buttonText {
+  font-size: 20px;
+  font-weight: 600;
+  color: #2D3748;
+  margin-bottom: 4px;
+}
+
+.buttonSubtext {
+  font-size: 14px;
+  color: #718096;
+}
+
+/* Specific Gradients for each button type */
+.beginnerGradient {
+  background-image: linear-gradient(to bottom, #E8F5E8, #F0F8F0);
+}
+
+.intermediateGradient {
+  background-image: linear-gradient(to bottom, #E8F0FF, #F0F6FF);
+}
+
+.advancedGradient {
+  background-image: linear-gradient(to bottom, #FFF0E8, #FFF6F0);
+}
+
+.meditationGradient {
+  background-image: linear-gradient(to bottom, #F8E8FF, #FCF0FF);
+}
+
+/* Gradient for photo upload button */
+.photoGradient {
+  background-image: linear-gradient(to bottom, #E0F7FF, #F0FBFF);
+}
+
+/* Photo detection result styles */
+.photoResult {
+  margin-top: 30px;
+  text-align: center;
+}
+
+.resultImage {
+  width: 90%;
+  display: block;
+  margin: 0 auto 10px auto;
+}
+
+.resultScore {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.resultSuggestion {
+  font-size: 16px;
+  color: #4A5568;
+}

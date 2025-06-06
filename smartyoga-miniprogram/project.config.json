@@ -1,0 +1,50 @@
+{
+  "description": "Project configuration file",
+  "setting": {
+    "urlCheck": true,
+    "es6": true,
+    "postcss": true,
+    "minified": true,
+    "newFeature": true,
+    "coverView": true,
+    "autoAudits": false,
+    "showShadowRootInWxmlPanel": true,
+    "scopeDataCheck": false,
+    "checkInvalidKey": true,
+    "checkSiteMap": true,
+    "uploadWithSourceMap": true,
+    "compileHotReLoad": false,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    },
+    "useIsolateContext": true,
+    "useCompilerModule": false,
+    "userConfirmedUseCompilerModuleSwitch": false,
+    "ignoreUploadUnusedFiles": true,
+    "enhance": false,
+    "packNpmRelationList": []
+  },
+  "compileType": "miniprogram",
+  "simulatorType": "wechat",
+  "simulatorPluginLibVersion": {},
+  "condition": {},
+  "srcMiniprogramRoot": "",
+  "appidProtected": false,
+  "cloudfunctionRoot": "cloudfunctions/",
+  "envName": "smartyoga-3gh3muyt510ddd2d",
+  "lazyloadPlaceholderEnable": false,
+  "preloadBackgroundData": false,
+  "editorSetting": {
+    "tabIndent": "insertSpaces",
+    "tabSize": 2
+  },
+  "libVersion": "3.8.7",
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "appid": "wx8b542165dfc4df6a",
+  "projectname": "Smart Yoga Mini Program"
+}
