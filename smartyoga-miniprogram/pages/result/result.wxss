@@ -1,0 +1,299 @@
+/* pages/result/result.wxss */
+.container {
+  min-height: 100vh;
+  background-color: #ffffff;
+  padding-top: 40rpx;
+}
+
+/* 错误提示样式 */
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 40rpx;
+}
+
+.error-icon {
+  font-size: 80rpx;
+  margin-bottom: 30rpx;
+}
+
+.error-text {
+  font-size: 32rpx;
+  color: #333333;
+  margin-bottom: 20rpx;
+}
+
+.error-hint {
+  font-size: 26rpx;
+  color: #999999;
+  margin-bottom: 30rpx;
+}
+
+/* 新增错误页按钮 */
+.error-button {
+  margin-top: 20rpx;
+  padding: 20rpx 60rpx;
+  background-color: #4A90E2;
+  color: #ffffff;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+  border: none;
+}
+
+/* 主内容区域 */
+.content {
+  padding: 0 30rpx 40rpx;
+}
+
+/* 图片展示区域 */
+.image-section {
+  text-align: center;
+  margin-bottom: 50rpx;
+}
+
+.skeleton-image {
+  width: 100%;
+  max-width: 600rpx;
+  height: 600rpx;
+  border-radius: 16rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
+  background-color: #f8f8f8;
+}
+
+.image-hint {
+  font-size: 24rpx;
+  color: #999999;
+  margin-top: 16rpx;
+  display: block;
+}
+
+/* 分数展示区域 */
+.score-section {
+  text-align: center;
+  margin-bottom: 50rpx;
+}
+
+.score-label {
+  font-size: 30rpx;
+  color: #666666;
+  display: block;
+  margin-bottom: 16rpx;
+}
+
+/* 优化分数显示，避免三位数溢出 */
+.score-wrapper {
+  display: inline-flex;
+  align-items: baseline;
+  max-width: 100%;
+}
+
+.score-value {
+  font-size: 120rpx;
+  font-weight: bold;
+  color: #4A90E2;
+  line-height: 1;
+  /* 三位数时自动缩小 */
+  max-width: 300rpx;
+}
+
+/* 100分时字体略小 */
+.score-wrapper .score-value:first-child {
+  font-size: min(120rpx, 40vw);
+}
+
+.score-suffix {
+  font-size: 36rpx;
+  color: #4A90E2;
+  margin-left: 8rpx;
+}
+
+/* AI建议区域 */
+.suggestion-section {
+  background-color: #f8f9fa;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 50rpx;
+}
+
+.suggestion-title {
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #333333;
+  display: block;
+  margin-bottom: 20rpx;
+}
+
+/* 优化建议内容，支持滚动 */
+.suggestion-content {
+  background-color: #ffffff;
+  border-radius: 12rpx;
+  padding: 24rpx;
+  max-height: 300rpx;
+  overflow-y: auto;
+}
+
+.suggestion-text {
+  font-size: 30rpx;
+  color: #666666;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* 按钮区域 */
+.button-section {
+  display: flex;
+  gap: 30rpx;
+  margin-bottom: 40rpx;
+}
+
+.save-button,
+.share-button {
+  flex: 1;
+  height: 96rpx;
+  background-color: #4A90E2;
+  color: #ffffff;
+  border-radius: 48rpx;
+  font-size: 32rpx;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  box-shadow: 0 4rpx 16rpx rgba(74, 144, 226, 0.3);
+  transition: all 0.3s ease;
+}
+
+.share-button {
+  background-color: #52C41A;
+  box-shadow: 0 4rpx 16rpx rgba(82, 196, 26, 0.3);
+}
+
+/* 禁用状态的分享按钮 */
+.share-button.disabled {
+  background-color: #cccccc;
+  box-shadow: none;
+}
+
+.save-button:active,
+.share-button:active {
+  transform: scale(0.98);
+}
+
+.save-button[disabled],
+.share-button[disabled] {
+  opacity: 0.6;
+}
+
+.button-icon {
+  font-size: 36rpx;
+  margin-right: 12rpx;
+}
+
+/* 其他操作 */
+.extra-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20rpx 0;
+}
+
+.action-link {
+  font-size: 28rpx;
+  color: #4A90E2;
+  padding: 10rpx 20rpx;
+}
+
+.action-divider {
+  color: #e0e0e0;
+  margin: 0 20rpx;
+}
+
+/* 温馨提示 */
+.tips-section {
+  text-align: center;
+  padding: 30rpx 0;
+  border-top: 1rpx solid #f0f0f0;
+  margin-top: 30rpx;
+}
+
+.tips-text {
+  font-size: 26rpx;
+  color: #999999;
+}
+
+/* 分享画布（预留） */
+.share-canvas {
+  position: fixed;
+  left: -9999px;
+  top: -9999px;
+}
+
+/* 适配不同屏幕 */
+@media (max-width: 375px) {
+  .skeleton-image {
+    max-width: 500rpx;
+    height: 500rpx;
+  }
+  
+  .score-value {
+    font-size: 100rpx;
+  }
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.content > view {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+.image-section {
+  animation-delay: 0.1s;
+}
+
+.score-section {
+  animation-delay: 0.2s;
+}
+
+.suggestion-section {
+  animation-delay: 0.3s;
+}
+
+.button-section {
+  animation-delay: 0.4s;
+}
+
+.tips-section {
+  animation-delay: 0.5s;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 4rpx;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 2rpx;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
