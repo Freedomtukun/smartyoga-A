@@ -1,0 +1,4 @@
+- Added missing imports (os, json).
+- Implemented _load_pose_definitions to load pose metadata from configurable path.
+- Ensured cross-platform path handling with os.path and improved logging.
+- Created backup file pose_detector.py.bak before modifications.
