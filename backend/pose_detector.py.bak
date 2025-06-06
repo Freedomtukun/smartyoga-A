@@ -4,8 +4,6 @@
 不生成任何本地文件，所有数据在内存中处理
 """
 
-import os
-import json
 import math
 import time
 import logging
@@ -58,41 +56,13 @@ except ImportError:
     ANGLE_CONFIG_DATA = {}
 
 # poses.json 路径，可通过环境变量覆盖
-_DEFAULT_POSES_PATH = os.path.join(os.path.dirname(__file__), "poses.json")
-POSES_FILE_PATH = os.environ.get("POSES_FILE_PATH", _DEFAULT_POSES_PATH)
+POSES_FILE_PATH = os.environ.get("POSES_FILE_PATH", "/home/ubuntu/yoga-pose-api/poses.json")
+_LOCAL_POSES_PATH = os.path.join(os.path.dirname(__file__), "poses.json")
 
 logger = logging.getLogger(__name__)
 
 # 全局变量，存储处理后的、保证为字典类型的支持姿势配置
 _SUPPORTED_POSES_REGISTRY: Dict[str, Dict[str, Any]] = {}
-
-# 姿势元数据加载
-def _load_pose_definitions(file_path: str) -> Dict[str, Dict[str, Any]]:
-    """从 JSON 文件加载姿势定义并转换为以 pose_id 为键的字典。"""
-    if not os.path.exists(file_path):
-        logger.error(f"Pose definition file not found: {file_path}")
-        return {}
-    try:
-        with open(file_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-    except Exception as exc:  # pragma: no cover - log and fallback
-        logger.error(f"Failed to load pose definitions: {exc}", exc_info=True)
-        return {}
-
-    processed: Dict[str, Dict[str, Any]] = {}
-    if isinstance(data, list):
-        for item in data:
-            if isinstance(item, dict):
-                pid = str(item.get("id") or item.get("pose_id") or "").strip()
-                if pid:
-                    processed[pid] = item
-    elif isinstance(data, dict):
-        for pid, item in data.items():
-            if isinstance(item, dict):
-                processed[str(pid)] = item
-    else:
-        logger.error(f"Invalid pose definition format: {type(data)}")
-    return processed
 
 def _initialize_supported_poses():
     """
@@ -104,7 +74,7 @@ def _initialize_supported_poses():
         logger.debug("_SUPPORTED_POSES_REGISTRY 已初始化，跳过。")
         return
 
-    data_path = POSES_FILE_PATH if os.path.exists(POSES_FILE_PATH) else _DEFAULT_POSES_PATH
+    data_path = POSES_FILE_PATH if os.path.exists(POSES_FILE_PATH) else _LOCAL_POSES_PATH
     processed_poses = _load_pose_definitions(data_path)
 
     _SUPPORTED_POSES_REGISTRY = processed_poses
