@@ -1,0 +1,5 @@
+Added missing os and json imports.
+Introduced _DEFAULT_POSES_PATH and environment override for pose definition path with cross-platform support.
+Implemented _load_pose_definitions() for loading pose metadata safely.
+Updated _initialize_supported_poses() to use new loader and path logic.
+Created pose_detector.py.bak as backup before modifications.
