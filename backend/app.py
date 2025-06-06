@@ -26,6 +26,7 @@ from pose_detector import (
     NoKeypointError,
     InvalidPoseError,
     get_supported_poses,
+    get_supported_pose_ids,
     DetectionConfig
 )
 # Assuming cos_uploader.py is in the same directory or accessible via PYTHONPATH
@@ -392,6 +393,17 @@ def detect_pose_file_route():
         logger.warning("请求缺少 'poseId' 参数。")
         return jsonify(ResponseBuilder.error("MISSING_PARAMETER", "必需的 'poseId' 参数缺失。")), 400
 
+    if pose_id not in get_supported_pose_ids():
+        logger.warning(f"Invalid poseId received: '{pose_id}'")
+        return jsonify(
+            ResponseBuilder.error(
+                "INVALID_POSE_ID_SPECIFIED",
+                "指定的体式ID不存在。",
+                pose_id=pose_id,
+                supportedPoses=get_supported_pose_ids()
+            )
+        ), 400
+
     if 'file' not in request.files:
         logger.warning("请求中未包含 'file' 部分。")
         return jsonify(ResponseBuilder.error("MISSING_FILE", "上传的文件参数 'file' 缺失。", pose_id=pose_id)), 400
@@ -534,11 +546,10 @@ def health_check_route():
     # Check 2: Pose Detector Module Functionality
     detector_check = {"name": "Pose_Detector_Module", "status": "healthy", "details": ""}
     try:
-        supported_poses = get_supported_poses() # From pose_detector
-        detector_check["details"] = f"模块可操作，支持 {len(supported_poses)} 种姿势。"
-        if not supported_poses: # Or some other check for basic functionality
-             logger.warning("健康检查: 姿势检测模块未返回支持的姿势列表或列表为空。")
-             # detector_check["status"] = "degraded" # Or "unhealthy" if this implies a problem
+        pose_ids = get_supported_pose_ids()
+        detector_check["details"] = f"模块可操作，支持 {len(pose_ids)} 种姿势。"
+        if not pose_ids:
+             logger.warning("健康检查: 姿势定义列表为空。")
     except Exception as e:
         logger.error(f"健康检查: 姿势检测模块异常: {e}")
         detector_check["status"] = "unhealthy" # Core functionality might be broken
@@ -584,19 +595,13 @@ def api_info_route():
 def list_supported_poses_route():
     """获取API支持的所有姿势类型列表"""
     try:
-        poses = get_supported_poses() # From pose_detector
-        if poses is None: # Defensive check if get_supported_poses could return None
-             logger.error("获取支持的姿势列表时，pose_detector.get_supported_poses() 返回了 None。")
-             return jsonify(ResponseBuilder.error("SUPPORTED_POSES_UNAVAILABLE", "无法获取支持的姿势列表，请稍后重试。")), 500
-
-        return jsonify({ # Using a more standard success response structure
+        poses_dict = get_supported_poses()
+        poses_list = list(poses_dict.values())
+        return jsonify({
             "code": "OK",
             "version": API_VERSION,
-            "message": "成功获取支持的姿势列表。",
-            "data": {
-                "poses": poses,
-                "count": len(poses)
-            },
+            "poses": poses_list,
+            "count": len(poses_list),
             "ts": int(time.time() * 1000),
             "requestId": getattr(g, 'request_id', 'N/A')
         })

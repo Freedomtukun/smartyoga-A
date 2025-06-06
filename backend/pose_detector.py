@@ -45,17 +45,19 @@ except ImportError:
             "left_ankle": [0.6, 0.9], "right_ankle": [0.4, 0.9]
         }
 
-# 从 angle_config.py 导入原始姿势数据
+# 从 angle_config.py 导入角度配置（若可用）
 try:
-    from angle_config import (
-        SUPPORTED_POSES as SUPPORTED_POSES_DATA,
-        angle_config as ANGLE_CONFIG_DATA
-    )
+    from angle_config import angle_config as ANGLE_CONFIG_DATA
 except ImportError:
     logger = logging.getLogger(__name__)
-    logger.critical("无法导入 angle_config.py 中的姿势数据。请检查该文件是否存在且路径正确。将使用空的默认值。")
-    SUPPORTED_POSES_DATA = {}
+    logger.critical(
+        "无法导入 angle_config.py 中的角度配置(angle_config)。将使用空的默认值。"
+    )
     ANGLE_CONFIG_DATA = {}
+
+# poses.json 路径，可通过环境变量覆盖
+POSES_FILE_PATH = os.environ.get("POSES_FILE_PATH", "/home/ubuntu/yoga-pose-api/poses.json")
+_LOCAL_POSES_PATH = os.path.join(os.path.dirname(__file__), "poses.json")
 
 logger = logging.getLogger(__name__)
 
@@ -72,38 +74,18 @@ def _initialize_supported_poses():
         logger.debug("_SUPPORTED_POSES_REGISTRY 已初始化，跳过。")
         return
 
-    processed_poses: Dict[str, Dict[str, Any]] = {}
-    source_data_for_registry = SUPPORTED_POSES_DATA
-
-    if isinstance(source_data_for_registry, dict):
-        for pose_id, pose_config in source_data_for_registry.items():
-            if not isinstance(pose_id, str):
-                logger.warning(f"在 SUPPORTED_POSES_DATA 中发现非字符串类型的 pose_id: {pose_id}，已跳过。")
-                continue
-            if not isinstance(pose_config, dict):
-                logger.warning(f"姿势 '{pose_id}' 在 SUPPORTED_POSES_DATA 中的配置不是字典类型，已跳过。配置: {pose_config}")
-                continue
-            processed_poses[pose_id] = pose_config
-    elif isinstance(source_data_for_registry, list):
-        for item in source_data_for_registry:
-            if not isinstance(item, dict):
-                logger.warning(f"SUPPORTED_POSES_DATA 列表中的项目不是字典类型，已跳过。项目: {item}")
-                continue
-            pose_id = item.get("id") or item.get("pose_id") or item.get("key")
-            if not pose_id or not isinstance(pose_id, str):
-                logger.warning(f"SUPPORTED_POSES_DATA 项目缺少有效的 'id'/'pose_id'/'key' 或其非字符串，已跳过。项目: {item}")
-                continue
-            if pose_id in processed_poses:
-                 logger.warning(f"在 SUPPORTED_POSES_DATA 中发现重复的 pose_id: '{pose_id}'，后一个将覆盖前一个。")
-            processed_poses[pose_id] = item
-    else:
-        logger.error(f"从 angle_config.py 加载的 SUPPORTED_POSES_DATA 类型不受支持: {type(source_data_for_registry)}。期望为 dict 或 list。")
+    data_path = POSES_FILE_PATH if os.path.exists(POSES_FILE_PATH) else _LOCAL_POSES_PATH
+    processed_poses = _load_pose_definitions(data_path)
 
     _SUPPORTED_POSES_REGISTRY = processed_poses
     if not _SUPPORTED_POSES_REGISTRY:
-        logger.warning("_SUPPORTED_POSES_REGISTRY 初始化后为空。请检查 angle_config.py 中的 SUPPORTED_POSES_DATA 定义。")
+        logger.warning(
+            f"_SUPPORTED_POSES_REGISTRY 初始化后为空。请检查姿势定义文件 '{data_path}' 是否存在且内容有效。"
+        )
     else:
-        logger.info(f"_SUPPORTED_POSES_REGISTRY 初始化完成，加载了 {len(_SUPPORTED_POSES_REGISTRY)} 个姿势的元数据。")
+        logger.info(
+            f"_SUPPORTED_POSES_REGISTRY 初始化完成，加载了 {len(_SUPPORTED_POSES_REGISTRY)} 个姿势的元数据。"
+        )
 
     if not isinstance(ANGLE_CONFIG_DATA, dict):
         logger.error(f"angle_config.angle_config (即 ANGLE_CONFIG_DATA) 不是字典类型，而是 {type(ANGLE_CONFIG_DATA)}。这将影响目标角度的获取。")
