@@ -1,18 +1,17 @@
-"""
-姿势检测模块
-实现图片姿势检测、评分和骨架图生成
-不生成任何本地文件，所有数据在内存中处理
-"""
+"""姿势检测模块
+实现图片姿势检测、评分和骨架图生成，所有数据均在内存中处理。"""
 
-import os
 import json
-import math
-import time
 import logging
-from typing import Dict, Tuple, List, Optional, Any
+import math
+import os
+import time
 from dataclasses import dataclass, field
 from enum import Enum
 from io import BytesIO
+from typing import Any, Dict, List, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 # 导入骨架绘制模块
 try:
@@ -22,7 +21,6 @@ except ImportError:
     try:
         from draw import draw_skeleton, draw_coco_skeleton, SkeletonFormat, DrawConfig
     except ImportError:
-        logger = logging.getLogger(__name__)
         logger.error("无法导入骨架绘制模块 (utils.draw 或 draw)，骨架图生成功能将不可用。")
         # 定义占位函数以避免 NameError
         def draw_coco_skeleton(*args, **kwargs):
@@ -32,7 +30,6 @@ except ImportError:
 try:
     from pose_model import infer_keypoints
 except ImportError:
-    logger = logging.getLogger(__name__)
     logger.warning("Mocking 'infer_keypoints' function as 'pose_model' module was not found.")
     def infer_keypoints(image_bytes: bytes) -> Dict[str, List[float]]:
         # 返回一个模拟的关键点字典，用于测试
@@ -51,7 +48,6 @@ except ImportError:
 try:
     from angle_config import angle_config as ANGLE_CONFIG_DATA
 except ImportError:
-    logger = logging.getLogger(__name__)
     logger.critical(
         "无法导入 angle_config.py 中的角度配置(angle_config)。将使用空的默认值。"
     )
@@ -60,8 +56,6 @@ except ImportError:
 # poses.json 路径，可通过环境变量覆盖
 _DEFAULT_POSES_PATH = os.path.join(os.path.dirname(__file__), "poses.json")
 POSES_FILE_PATH = os.environ.get("POSES_FILE_PATH", _DEFAULT_POSES_PATH)
-
-logger = logging.getLogger(__name__)
 
 # 全局变量，存储处理后的、保证为字典类型的支持姿势配置
 _SUPPORTED_POSES_REGISTRY: Dict[str, Dict[str, Any]] = {}
@@ -462,7 +456,11 @@ def detect_pose(
 
         # 5. 计算姿势分数
         scoring_start_time = time.monotonic()
-        final_score, scoring_details_map = score_pose(validated_keypoints, target_angles_for_current_pose, current_config)
+        final_score, _ = score_pose(
+            validated_keypoints,
+            target_angles_for_current_pose,
+            current_config,
+        )
         timing_stats["pose_scoring_ms"] = (time.monotonic() - scoring_start_time) * 1000
         logger.info(f"姿势评分完成: 最终分数={final_score}, 用时: {timing_stats['pose_scoring_ms']:.2f}ms")
 
@@ -471,30 +469,25 @@ def detect_pose(
         skeleton_image_bytes_io = BytesIO()
         
         try:
-            # 尝试使用配置的骨架格式和绘制配置
-            if current_config.skeleton_format is None:
-                # 如果没有配置，使用默认的 COCO_17 格式
+            skeleton_format_to_use = current_config.skeleton_format
+            if skeleton_format_to_use is None:
                 try:
                     skeleton_format_to_use = SkeletonFormat.COCO_17
                 except NameError:
                     skeleton_format_to_use = None
-            else:
-                skeleton_format_to_use = current_config.skeleton_format
-            
-            if current_config.draw_config is None:
-                # 如果没有配置，使用默认的绘制配置
+
+            draw_config_to_use = current_config.draw_config
+            if draw_config_to_use is None:
                 try:
                     draw_config_to_use = DrawConfig(
-                        line_color=(0, 255, 0, 255),  # 绿色连接线
+                        line_color=(0, 255, 0, 255),
                         line_width=3,
-                        point_color=(255, 0, 0, 255),  # 红色关键点
+                        point_color=(255, 0, 0, 255),
                         point_radius=5,
-                        use_original_image=True  # 在原图上绘制
+                        use_original_image=True,
                     )
                 except NameError:
                     draw_config_to_use = None
-            else:
-                draw_config_to_use = current_config.draw_config
             
             # 优先使用 draw_skeleton 函数（更灵活）
             if skeleton_format_to_use is not None and draw_config_to_use is not None:
