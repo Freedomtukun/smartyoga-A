@@ -1,3 +1,4 @@
+/* 冥想页样式 */
 .container {
   display: flex;
   flex-direction: column; /* Changed to column for main layout */

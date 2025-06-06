@@ -1,3 +1,4 @@
+<!-- 上传姿势照片检测的唯一入口页 -->
 <!-- pages/photo-detect/photo-detect.wxml -->
 <view class="container">
   <!-- 错误提示 -->

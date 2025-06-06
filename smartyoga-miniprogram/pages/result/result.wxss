@@ -1,3 +1,4 @@
+/* 结果展示样式 */
 /* pages/result/result.wxss */
 .container {
   min-height: 100vh;
