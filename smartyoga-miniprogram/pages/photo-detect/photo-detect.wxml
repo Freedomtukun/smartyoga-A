@@ -60,7 +60,7 @@
     </view>
 
     <!-- 检测结果 -->
-    <view wx:if="{{showResult}}" class="result-section">
+    <view wx:if="{{showResult}}" class="result-section" id="resultSection">
       <!-- 骨架图展示 -->
       <view class="skeleton-image-container">
         <image 
@@ -85,14 +85,14 @@
       <!-- AI建议 -->
       <view class="suggestion-container" wx:if="{{suggestions}}">
         <text class="suggestion-title">AI建议</text>
-        <view class="suggestion-box">
+        <scroll-view class="suggestion-box" scroll-y>
           <text class="suggestion-text">{{suggestions}}</text>
-        </view>
+        </scroll-view>
       </view>
 
       <!-- 结果操作按钮 -->
       <view class="result-actions">
-        <button class="save-button" bindtap="saveSkeletonImage">
+        <button class="save-button" bindtap="saveSkeletonImage" loading="{{isSaving}}" disabled="{{isSaving}}">
           <text class="button-icon">💾</text>
           保存图片
         </button>
