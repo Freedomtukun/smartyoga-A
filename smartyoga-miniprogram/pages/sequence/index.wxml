@@ -42,85 +42,11 @@
       <view bindtap="handleNext" class="controlButton">
         <text class="controlButtonText">▶▶</text>
       </view>
-      <button class="camBtn" bindtap="handleCameraPress">
-        <image src="/assets/images/cam.png" class="camIcon"/>
-      </button>
-      <!-- New Upload/Record Video Button -->
-      <button bindtap="handleChooseOrRecordVideo" class="controlButton control-btn upload-btn">
-        <text class="controlButtonText">上传/录制视频</text>
-      </button>
+      <!-- 控制按钮保留播放与下一步 -->
     </view>
   </block>
 
-  <!-- Camera Modal -->
-  <view wx:if="{{showCamera}}" class="modalOverlay">
-    <view class="cameraModalContainer">
-      <view class="cameraHeader">
-        <text class="cameraTitle">录制您的体式</text>
-        <button bindtap="toggleCamera" class="cameraToggleButton">⇆</button>
-        <view bindtap="closeCamera" class="closeButton">
-          <text class="closeButtonText">X</text>
-        </view>
-      </view>
-      <camera 
-        id="myCamera" 
-        device-position="{{cameraPosition}}" 
-        flash="off" 
-        binderror="cameraError" 
-        class="cameraView"
-        style="width:100%; height: 300px;"
-      ></camera>
-      
-      <view wx:if="{{!recordedVideo}}">
-        <button wx:if="{{!isRecording}}" bindtap="startRecording" class="cameraActionButton">开始录制</button>
-        <button wx:else bindtap="stopRecording" class="cameraActionButton recording">停止录制</button>
-      </view>
-      
-      <view wx:if="{{recordedVideo}}" class="videoPreviewContainer">
-        <text class="previewText">视频已录制:</text>
-        <!-- Mini Program doesn't have a direct video player for temp files like this in WXML easily -->
-        <!-- Usually, you'd upload it then play the remote URL, or use a more complex setup -->
-        <text class="videoPathText">路径: {{recordedVideo}}</text>
-        <view class="videoActions">
-          <button 
-            bindtap="uploadAndScore" 
-            class="cameraActionButton"
-            disabled="{{isProcessingFrames}}">
-            {{isProcessingFrames ? '处理中...' : '上传评分'}}
-          </button>
-          <button 
-            bindtap="retakeVideo" 
-            class="cameraActionButton secondary"
-            disabled="{{isProcessingFrames}}">
-            重新录制
-          </button>
-        </view>
-      </view>
-      <view wx:if="{{isUploading && !isProcessingFrames}}" class="uploadingIndicator"> <!-- Ensure old indicator doesn't overlap if isUploading is still used elsewhere -->
-        <text>上传中...</text>
-      </view>
 
-      <!-- Frame Processing Indicator -->
-      <view wx:if="{{isProcessingFrames}}" class="frameProcessingIndicator">
-        <text>正在提取和分析帧...</text>
-        <!-- Optional: Add a wx:for loop here if you plan to show individual frame progress -->
-      </view>
-    </view>
-  </view>
-
-  <!-- Hidden elements for frame extraction -->
-  <video
-    id="frameExtractorVideo"
-    src="{{recordedVideo}}" 
-    style="display: none; width: 1px; height: 1px; position: absolute; top: -1000px; left: -1000px;"
-    bindloadedmetadata="onVideoLoadMetadata"
-    bindtimeupdate="onVideoTimeUpdate"
-  ></video>
-  <canvas
-    canvas-id="frameExtractorCanvas"
-    id="frameExtractorCanvas"
-    style="width:480px; height:320px; opacity:0; position:absolute; left:-9999px; top:-9999px;"
-  ></canvas>
 
   <!-- Score Modal -->
   <view wx:if="{{showScoreModal}}" class="modalOverlay">
@@ -150,15 +76,4 @@
     </view>
   </view>
 
-  <!-- Top 3 Scored Frames Display -->
-  <view wx:if="{{topThreeFrames && topThreeFrames.length > 0}}" class="topFramesContainer">
-    <text class="topFramesTitle">最佳帧分析结果</text>
-    <view wx:for="{{topThreeFrames}}" wx:key="index" class="frameResultItem">
-      <image class="frameSkeletonImage" src="{{item.skeletonUrl}}" mode="aspectFit" />
-      <view class="frameInfo">
-        <text class="frameScore">评分: {{item.score}}</text>
-        <text class="frameFeedback">AI建议: {{item.feedback}}</text>
-      </view>
-    </view>
-  </view>
 </view>
