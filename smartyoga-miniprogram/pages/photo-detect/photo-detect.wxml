@@ -1,0 +1,111 @@
+<!-- pages/photo-detect/photo-detect.wxml -->
+<view class="container">
+  <!-- 错误提示 -->
+  <view wx:if="{{hasError}}" class="error-container">
+    <text class="error-icon">❌</text>
+    <text class="error-text">{{errorMessage}}</text>
+    <text class="error-hint">3秒后自动返回...</text>
+    <button class="error-button" bindtap="goBackImmediately">立即返回</button>
+  </view>
+
+  <!-- 正常内容 -->
+  <view wx:else class="content">
+    <!-- 上传区域 -->
+    <view wx:if="{{!showResult}}" class="upload-section">
+      <!-- 图片预览区 -->
+      <view class="image-preview" wx:if="{{imageUrl}}">
+        <image 
+          class="preview-image" 
+          src="{{imageUrl}}" 
+          mode="aspectFit"
+          bindtap="previewOriginalImage"
+        />
+        <text class="preview-hint">点击可预览大图</text>
+      </view>
+
+      <!-- 未选择图片时的占位 -->
+      <view wx:else class="upload-placeholder" bindtap="chooseImage">
+        <text class="upload-icon">📷</text>
+        <text class="upload-text">点击选择图片</text>
+        <text class="upload-hint">支持从相册选择或拍照</text>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="action-buttons">
+        <button 
+          wx:if="{{!imageUrl}}"
+          class="primary-button"
+          bindtap="chooseImage"
+        >
+          选择图片
+        </button>
+
+        <view wx:else class="button-group">
+          <button 
+            class="secondary-button"
+            bindtap="chooseImage"
+          >
+            重新选择
+          </button>
+          <button 
+            class="primary-button"
+            bindtap="startDetection"
+            loading="{{isDetecting}}"
+            disabled="{{isDetecting}}"
+          >
+            开始检测
+          </button>
+        </view>
+      </view>
+    </view>
+
+    <!-- 检测结果 -->
+    <view wx:if="{{showResult}}" class="result-section">
+      <!-- 骨架图展示 -->
+      <view class="skeleton-image-container">
+        <image 
+          class="skeleton-image" 
+          src="{{skeletonUrl}}" 
+          mode="aspectFit"
+          bindtap="previewSkeletonImage"
+          show-menu-by-longpress="true"
+        />
+        <text class="image-label">检测结果·骨架图</text>
+      </view>
+
+      <!-- 分数展示 -->
+      <view class="score-container">
+        <text class="score-label">检测得分</text>
+        <view class="score-display">
+          <text class="score-value">{{score}}</text>
+          <text class="score-suffix">分</text>
+        </view>
+      </view>
+
+      <!-- AI建议 -->
+      <view class="suggestion-container" wx:if="{{suggestions}}">
+        <text class="suggestion-title">AI建议</text>
+        <view class="suggestion-box">
+          <text class="suggestion-text">{{suggestions}}</text>
+        </view>
+      </view>
+
+      <!-- 结果操作按钮 -->
+      <view class="result-actions">
+        <button class="save-button" bindtap="saveSkeletonImage">
+          <text class="button-icon">💾</text>
+          保存图片
+        </button>
+        <button class="retry-button" bindtap="resetDetection">
+          <text class="button-icon">🔄</text>
+          重新检测
+        </button>
+      </view>
+
+      <!-- 查看完整结果 -->
+      <view class="view-full-result">
+        <text class="link-text" bindtap="viewFullResult">查看完整结果 →</text>
+      </view>
+    </view>
+  </view>
+</view>
