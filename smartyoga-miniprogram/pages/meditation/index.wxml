@@ -1,3 +1,4 @@
+<!-- 冥想页 -->
 <view class="container">
   <view class="header">
     <view bindtap="handleBack" class="backButton">

@@ -1,3 +1,4 @@
+// 冥想页保留音频播放功能
 Page({
   data: {
     isPlaying: false,

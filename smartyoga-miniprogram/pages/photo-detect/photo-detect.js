@@ -1,3 +1,4 @@
+// 本模块负责上传姿势照片并展示结果，其余页面已移除相关功能
 // pages/photo-detect/photo-detect.js
 import { DETECT_POSE_URL } from '../../utils/yoga-api.js';
 

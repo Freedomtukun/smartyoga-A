@@ -1,3 +1,4 @@
+// 展示检测结果的简洁页面
 // pages/result/result.js
 Page({
   data: {
@@ -241,10 +242,9 @@ Page({
   // 重新检测（使用 reLaunch 避免页面栈过深）
   retryDetection() {
     wx.reLaunch({
-      url: '/pages/upload/upload'
+      url: "/pages/photo-detect/photo-detect"
     });
   },
-
   // 分享给朋友
   onShareAppMessage() {
     const score = this.data.score;
