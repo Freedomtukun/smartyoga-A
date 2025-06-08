@@ -424,6 +424,7 @@ def detect_pose(
         # 2. 从图片中推理关键点
         inference_start_time = time.monotonic()
         raw_keypoints_data = infer_keypoints(image_bytes)
+        logger.info(f"【DEBUG: 推理关键点数据】{raw_keypoints_data}")
         timing_stats["keypoint_inference_ms"] = (time.monotonic() - inference_start_time) * 1000
         logger.info(f"关键点推理完成，用时: {timing_stats['keypoint_inference_ms']:.2f}ms")
 
