@@ -1,79 +1,9 @@
 <view class="container">
-  <!-- Loading State -->
-  <view wx:if="{{loading}}" class="loadingContainer">
-    <text class="loadingText">加载中...</text>
-    <!-- Add a custom loading animation here if desired -->
-  </view>
-
-  <!-- Error State (Simplified) -->
-  <view wx:elif="{{error}}" class="errorContainer">
-    <text class="errorText">{{error}}</text>
-    <button bindtap="loadSequenceData" data-level="{{level}}">重试</button>
-  </view>
-
-  <!-- Main Content -->
-  <block wx:else>
-    <view class="header">
-      <view bindtap="handleBack" class="backButton">
-        <text class="backButtonText">←</text>
-      </view>
-      <text class="headerTitle">{{currentSequence.name.zh}} - {{currentPoseIndex + 1}}/{{currentSequence.poses.length}}</text>
-      <view class="placeholderView" />
-    </view>
-
-    <view class="poseContainer">
-      <image 
-        class="poseImg" 
-        src="{{currentSequence.poses[currentPoseIndex].image_url}}" 
-        mode="aspectFit"
-        binderror="onImageError"
-      />
-      <text class="poseName">{{currentSequence.poses[currentPoseIndex].displayName || currentSequence.poses[currentPoseIndex].name.zh}}</text>
-      <text class="poseInstructions">{{currentSequence.poses[currentPoseIndex].instructions.zh}}</text>
-      <text class="timerText">{{timeRemaining}}s</text>
-    </view>
-    <!-- Skeleton Image Display Area -->
-    <image wx:if="{{skeletonUrl}}" class="skeletonImg" src="{{skeletonUrl}}" mode="widthFix"/>
-
-    <view class="controlsContainer">
-      <view bindtap="togglePlayPause" class="controlButton">
-        <text class="controlButtonText">{{isPlaying ? '❚❚' : '▶'}}</text>
-      </view>
-      <view bindtap="handleNext" class="controlButton">
-        <text class="controlButtonText">▶▶</text>
-      </view>
-      <!-- 控制按钮保留播放与下一步 -->
-    </view>
-  </block>
-
-
-
-  <!-- Score Modal -->
-  <view wx:if="{{showScoreModal}}" class="modalOverlay">
-    <view class="scoreModalContainer">
-      <text class="scoreModalTitle">体式评分</text>
-      <view class="scoreDisplay">
-        <text class="scoreText">{{poseScore ? poseScore.score : 'N/A'}} / 100</text>
-        <text class="scoreFeedback">{{poseScore ? poseScore.feedback : ''}}</text>
-      </view>
-      <!-- Skeleton Image for Score Modal -->
-      <image 
-        wx:if="{{scoreSkeletonImageUrl}}" 
-        src="{{scoreSkeletonImageUrl}}" 
-        style="width:90%; margin:12px auto; display:block;" 
-        mode="widthFix"
-        binderror="onScoreSkeletonImageError"
-        class="scoreSkeletonImage" 
-      />
-      <text wx:if="{{!scoreSkeletonImageUrl && showScoreModal}}" class="noSkeletonImageText">
-        No skeleton image available.
-      </text>
-       <!-- Example: Star rating based on score -->
-      <view class="starRating">
-        <text wx:for="{{5}}" wx:key="*this" class="star {{index < (poseScore.score / 20) ? 'filled' : ''}}">★</text>
-      </view>
-      <button bindtap="closeScoreModal" class="cameraActionButton">关闭</button>
+  <view class="pose-list">
+    <view wx:for="{{poses}}" wx:key="{{item.key}}" class="pose-item">
+      <image class="pose-image" src="{{poseImages[item.key]}}" mode="aspectFit" />
+      <text class="pose-name">{{item.name}}</text>
     </view>
   </view>
-
 </view>
+
