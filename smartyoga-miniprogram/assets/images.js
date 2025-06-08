@@ -1,4 +1,4 @@
-export default {
+const poseImages = {
   boat_pose: '/assets/poses/boat_pose.png',
   bound_angle_pose: '/assets/poses/bound_angle_pose.png',
   bridge_pose: '/assets/poses/bridge_pose.png',
@@ -20,3 +20,6 @@ export default {
   warrior_ii: '/assets/poses/warrior_ii.png',
   warrior_iii: '/assets/poses/warrior_iii.png'
 };
+
+export default poseImages;
+export { poseImages };

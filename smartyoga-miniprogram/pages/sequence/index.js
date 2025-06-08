@@ -1,4 +1,5 @@
 import { uploadFrameForScoring, DEFAULT_POSE_IMAGE } from '../../utils/yoga-api.js';
+import poseImages from '../../assets/images.js';
 const cloudSequenceService = require('../../utils/cloud-sequence-service.js');
 const sequenceService = require('../../utils/sequence-service.js');
 const getText = v => (typeof v === 'object' ? (v.zh || v.en || '') : v);
@@ -17,7 +18,8 @@ Page({
     showScoreModal: false,
     poseScore: null,
     scoreSkeletonImageUrl: null,
-    defaultPoseImage: DEFAULT_POSE_IMAGE
+    defaultPoseImage: DEFAULT_POSE_IMAGE,
+    poseImages
   },
 
 

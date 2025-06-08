@@ -22,11 +22,17 @@
     </view>
 
     <view class="poseContainer">
-      <image 
-        class="poseImg" 
-        src="{{currentSequence.poses[currentPoseIndex].image_url}}" 
+      <image
+        class="poseImg"
+        src="{{currentSequence.poses[currentPoseIndex].image_url}}"
         mode="aspectFit"
         binderror="onImageError"
+      />
+      <image 
+        class="pose-photo" 
+        src="{{poseImages[currentSequence.poses[currentPoseIndex].key]}}" 
+        mode="aspectFit" 
+        style="width: 90%; max-width: 320px; margin: 12px auto; display: block;" 
       />
       <text class="poseName">{{currentSequence.poses[currentPoseIndex].displayName || currentSequence.poses[currentPoseIndex].name.zh}}</text>
       <text class="poseInstructions">{{currentSequence.poses[currentPoseIndex].instructions.zh}}</text>
