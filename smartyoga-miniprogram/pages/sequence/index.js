@@ -191,14 +191,7 @@ Page({
     console.warn('[IMAGE_ERROR] Failed to load image:', e.detail.errMsg, 'Type:', imageType, 'Index:', imageIndex);
     
     // Update the specific image that failed based on type
-    if (imageType === 'pose') {
-      // Update current pose image
-      if (this.data.currentSequence && this.data.currentSequence.poses[this.data.currentPoseIndex]) {
-        this.setData({
-          [`currentSequence.poses[${this.data.currentPoseIndex}].image_url`]: DEFAULT_POSE_IMAGE
-        });
-      }
-    } else if (imageType === 'skeleton' && imageIndex !== undefined) {
+    if (imageType === 'skeleton' && imageIndex !== undefined) {
       // Update skeleton image in topThreeFrames
       const frameIndex = parseInt(imageIndex);
       if (!isNaN(frameIndex) && this.data.topThreeFrames[frameIndex]) {
