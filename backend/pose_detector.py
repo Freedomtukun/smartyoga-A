@@ -117,6 +117,11 @@ def _initialize_supported_poses():
 # 在模块加载时执行初始化
 _initialize_supported_poses()
 
+print("【后端 ANGLE_CONFIG_DATA 支持体式数量】: ", len(ANGLE_CONFIG_DATA))
+print("【后端 ANGLE_CONFIG_DATA 支持体式 key】: ", list(ANGLE_CONFIG_DATA.keys()))
+print("【后端 _SUPPORTED_POSES_REGISTRY 支持体式数量】: ", len(_SUPPORTED_POSES_REGISTRY))
+print("【后端 _SUPPORTED_POSES_REGISTRY 支持体式 key】: ", list(_SUPPORTED_POSES_REGISTRY.keys()))
+
 
 class ErrorCode(Enum):
     """错误码枚举"""
