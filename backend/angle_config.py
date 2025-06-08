@@ -109,5 +109,3 @@ def infer_keypoints(image_bytes: bytes) -> dict:
     except Exception as e:
         raise NoKeypointError(f"推理失败: {str(e)}")
 
-print("【后端 ANGLE_CONFIG_DATA 支持体式数量】: ", len(ANGLE_CONFIG_DATA))
-print("【后端 ANGLE_CONFIG_DATA 支持体式 key】: ", list(ANGLE_CONFIG_DATA.keys()))
