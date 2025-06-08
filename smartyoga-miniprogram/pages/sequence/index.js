@@ -39,11 +39,19 @@ Page({
     
     try {
       const sequenceData = await cloudSequenceService.getProcessedSequence(level);
-      
+
       if (sequenceData && sequenceData.poses && sequenceData.poses.length > 0) {
+        // Auto fill pose key using image_url filename if missing
+        sequenceData.poses = sequenceData.poses.map(pose => {
+          if (!pose.key && pose.image_url) {
+            const file = pose.image_url.split('/').pop();
+            pose.key = file.replace(/\.(png|jpg|jpeg)$/i, '');
+          }
+          return pose;
+        });
         const initialState = sequenceService.setSequence(sequenceData);
         this.setData({
-          ...initialState, 
+          ...initialState,
           loading: false
         });
         wx.hideLoading();
