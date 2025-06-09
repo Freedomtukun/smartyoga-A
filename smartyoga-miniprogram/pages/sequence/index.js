@@ -4,6 +4,11 @@ const cloudSequenceService = require('../../utils/cloud-sequence-service.js');
 const sequenceService = require('../../utils/sequence-service.js');
 const getText = v => (typeof v === 'object' ? (v.zh || v.en || '') : v);
 
+function normalizeKey(key) {
+  if (!key) return '';
+  return key.toLowerCase().replace(/[-\s]/g, '_');
+}
+
 Page({
   data: {
     level: '',
@@ -19,7 +24,15 @@ Page({
     poseScore: null,
     scoreSkeletonImageUrl: null,
     defaultPoseImage: DEFAULT_POSE_IMAGE,
-    poseImages
+    poseImages,
+    normalizedPoseKey: ''
+  },
+
+  updateNormalizedPoseKey() {
+    const seq = this.data.currentSequence;
+    const idx = this.data.currentPoseIndex;
+    const key = seq && seq.poses && seq.poses[idx] ? seq.poses[idx].key : '';
+    this.setData({ normalizedPoseKey: normalizeKey(key) });
   },
 
 
@@ -54,6 +67,7 @@ Page({
           ...initialState,
           loading: false
         });
+        this.updateNormalizedPoseKey();
         wx.hideLoading();
         wx.setNavigationBarTitle({ 
           title: `${getText(initialState.currentSequence.name)} - ${initialState.currentPoseIndex + 1}/${initialState.currentSequence.poses.length}` 
@@ -149,8 +163,9 @@ Page({
         currentPoseIndex: nextState.currentPoseIndex_new,
         timeRemaining: nextState.timeRemaining_new
       });
-      wx.setNavigationBarTitle({ 
-        title: `${getText(currentSequence.name)} - ${nextState.currentPoseIndex_new + 1}/${currentSequence.poses.length}` 
+      this.updateNormalizedPoseKey();
+      wx.setNavigationBarTitle({
+        title: `${getText(currentSequence.name)} - ${nextState.currentPoseIndex_new + 1}/${currentSequence.poses.length}`
       });
       
       if (this.data.isPlaying) {

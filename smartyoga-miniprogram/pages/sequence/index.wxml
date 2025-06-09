@@ -24,7 +24,7 @@
     <view class="poseContainer">
       <image
         class="pose-photo"
-        src="{{poseImages[currentSequence.poses[currentPoseIndex].key]}}"
+        src="{{poseImages[normalizedPoseKey]}}"
         mode="aspectFit"
         style="width: 90%; max-width: 320px; margin: 12px auto; display: block;"
       />
