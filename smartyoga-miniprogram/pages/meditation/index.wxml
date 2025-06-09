@@ -1,0 +1,91 @@
+<!-- 冥想页面主容器 -->
+<view class="container">
+  <!-- 页面头部 -->
+  <view class="header">
+    <view bindtap="handleBack" class="backButton">
+      <text class="backButtonText">←</text>
+    </view>
+    <text class="headerTitle">冥想</text>
+    <view class="placeholder" />
+  </view>
+
+  <!-- 冥想类型选择列表 -->
+  <view class="meditationTypeContainer">
+    <scroll-view scroll-x="true" class="meditationTypeScrollView" show-scrollbar="{{false}}">
+      <view class="meditationTypeList">
+        <view 
+          wx:for="{{meditationList}}" 
+          wx:key="id"
+          class="meditationTypeItem {{currentIndex === index ? 'meditationTypeItemActive' : ''}}"
+          bindtap="switchMeditation"
+          data-index="{{index}}"
+        >
+          <text class="meditationTypeName">{{item.name}}</text>
+          <text class="meditationTypeDuration">{{formatDuration(item.duration)}}</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 页面主要内容 -->
+  <view class="content">
+    <!-- 冥想主图容器 -->
+    <view class="meditationImageContainer">
+      <image
+        src="https://yogasmart-static-1351554677.cos.ap-shanghai.myqcloud.com/images/poses/meditation_lotus.png"
+        class="meditationImage"
+        mode="aspectFill"
+        lazy-load="{{true}}"
+      />
+      <!-- 播放状态指示器 -->
+      <view class="playStatusIndicator {{isPlaying ? 'playStatusIndicatorActive' : ''}}">
+        <text class="playStatusIcon">{{isPlaying ? '♪' : '☁'}}</text>
+      </view>
+    </view>
+
+    <!-- 冥想信息展示 -->
+    <view class="meditationInfo">
+      <!-- 冥想标题 -->
+      <text class="title">{{currentMeditation.name || '正念冥想'}}</text>
+      
+      <!-- 冥想时长 -->
+      <text class="duration">时长：{{formatDuration(currentMeditation.duration || 0)}}</text>
+      
+      <!-- 冥想描述 -->
+      <text class="description">
+        {{currentMeditation.desc || '找一个安静舒适的地方，闭上眼睛，专注于呼吸。让思绪自然流淌，不要强迫或判断。当注意力分散时，轻柔地将其带回到呼吸上。'}}
+      </text>
+      
+      <!-- 冥想指导说明 -->
+      <view class="instructions">
+        <text class="instructionTitle">冥想指导：</text>
+        <text class="instructionText">• 保持舒适的坐姿</text>
+        <text class="instructionText">• 轻闭双眼</text>
+        <text class="instructionText">• 专注于自然呼吸</text>
+        <text class="instructionText">• 观察思绪但不评判</text>
+        <text class="instructionText">• 当注意力分散时轻柔地回到呼吸</text>
+      </view>
+    </view>
+
+    <!-- 播放控制按钮 -->
+    <view class="controls">
+      <view 
+        class="meditationButton {{isPlaying ? 'meditationButtonActive' : ''}}"
+        bindtap="toggleMeditation"
+      >
+        <text class="meditationButtonIcon">{{isPlaying ? '❚❚' : '▶'}}</text>
+        <text class="meditationButtonText">
+          {{isPlaying ? '暂停冥想' : '开始冥想'}}
+        </text>
+      </view>
+      
+      <!-- 播放提示 -->
+      <view class="playTip" wx:if="{{!isPlaying}}">
+        <text class="playTipText">戴上耳机，找个安静的地方开始冥想</text>
+      </view>
+      <view class="playTip" wx:else>
+        <text class="playTipText">正在播放：{{currentMeditation.name}}</text>
+      </view>
+    </view>
+  </view>
+</view>
