@@ -1,3 +1,16 @@
+<view wx:if="{{showWelcomeVideo}}" class="welcome-video-overlay">
+  <video
+    src="{{welcomeVideoUrl}}"
+    controls="{{false}}"
+    autoplay
+    show-center-play-btn="{{false}}"
+    enable-progress-gesture="{{false}}"
+    loop="{{false}}"
+    style="width: 100vw; height: 100vh;"
+    bindended="onWelcomeVideoEnd"
+  ></video>
+  <button class="skip-btn" bindtap="skipWelcomeVideo">跳过</button>
+</view>
 <view class="container">
   <view class="content">
     <view class="header">
