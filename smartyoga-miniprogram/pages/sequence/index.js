@@ -226,7 +226,11 @@ Page({
   },
 
   // Lifecycle hooks
+  onShow: function () {
+    wx.setKeepScreenOn({ keepScreenOn: true });
+  },
   onHide: function () {
+    wx.setKeepScreenOn({ keepScreenOn: false });
     this.stopTimer();
   },
 
