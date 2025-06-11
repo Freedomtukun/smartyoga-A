@@ -53,14 +53,12 @@
         <text>保存图片</text>
       </button>
       
-      <!-- 分享按钮标注开发中 -->
       <button 
-        class="share-button disabled" 
-        bindtap="onShare"
-        disabled="true"
+        class="invite-btn"
+        bindtap="onInviteClick"
       >
-        <text class="button-icon">📤</text>
-        <text>分享(开发中)</text>
+        <text class="button-icon">🌟</text>
+        <text>成为推广合伙人</text>
       </button>
     </view>
 
