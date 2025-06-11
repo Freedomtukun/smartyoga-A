@@ -1,0 +1,45 @@
+.invite-container {
+  padding: 40rpx 24rpx;
+}
+.title {
+  font-size: 32rpx;
+  font-weight: bold;
+  margin-bottom: 32rpx;
+}
+.input {
+  width: 100%;
+  padding: 24rpx 16rpx;
+  border: 1px solid #eee;
+  border-radius: 12rpx;
+  margin-bottom: 16rpx;
+}
+.btn {
+  width: 100%;
+  background: #5677fc;
+  color: #fff;
+  border-radius: 12rpx;
+  padding: 24rpx 0;
+  margin-bottom: 24rpx;
+  font-size: 28rpx;
+}
+.divider {
+  text-align: center;
+  color: #888;
+  margin: 16rpx 0 24rpx 0;
+}
+.subtitle {
+  font-size: 26rpx;
+  color: #666;
+  margin-top: 20rpx;
+}
+.invite-code {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #e94f4f;
+  margin: 12rpx 0;
+}
+.qrcode {
+  width: 240rpx;
+  height: 240rpx;
+  margin-top: 24rpx;
+}

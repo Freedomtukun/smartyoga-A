@@ -1,0 +1,17 @@
+<view class="invite-container">
+  <view class="title">填写或获取邀请码</view>
+  <!-- 输入邀请码绑定邀请人 -->
+  <input class="input" placeholder="请输入邀请码" bindinput="onInput" value="{{inviteCode}}" />
+  <button class="btn" bindtap="onBind">绑定邀请码</button>
+
+  <view class="divider">或</view>
+
+  <!-- 生成并显示自己的专属邀请码 -->
+  <button class="btn" bindtap="onGenCode">生成我的邀请码</button>
+  <view wx:if="{{myInviteCode}}">
+    <view class="subtitle">我的专属邀请码：</view>
+    <view class="invite-code">{{myInviteCode}}</view>
+    <!-- 这里可以预留二维码位，将来升级扫码裂变 -->
+    <!-- <image src="{{qrcodeUrl}}" class="qrcode" wx:if="{{qrcodeUrl}}" /> -->
+  </view>
+</view>
