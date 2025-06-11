@@ -188,6 +188,26 @@
   opacity: 0.6;
 }
 
+.invite-btn {
+  flex: 1;
+  height: 96rpx;
+  background-color: #52C41A;
+  color: #ffffff;
+  border-radius: 48rpx;
+  font-size: 32rpx;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  box-shadow: 0 4rpx 16rpx rgba(82, 196, 26, 0.3);
+  transition: all 0.3s ease;
+}
+
+.invite-btn:active {
+  transform: scale(0.98);
+}
+
 .button-icon {
   font-size: 36rpx;
   margin-right: 12rpx;

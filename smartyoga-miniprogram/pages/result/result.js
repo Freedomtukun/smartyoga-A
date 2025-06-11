@@ -223,6 +223,13 @@ Page({
     });
   },
 
+  // 跳转到邀请码/推广入口页面
+  onInviteClick() {
+    wx.navigateTo({
+      url: '/pages/invite/invite'
+    });
+  },
+
   // 图片预览
   previewImage() {
     if (this.data.imageUrl) {
