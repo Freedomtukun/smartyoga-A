@@ -30,7 +30,13 @@ from pose_detector import (
     DetectionConfig
 )
 # Assuming cos_uploader.py is in the same directory or accessible via PYTHONPATH
+# Import COS uploader utilities
 from cos_uploader import upload_buffer, CosUploadError, check_cos_connection
+# Import csv saving utility
+try:
+    from utils.save_score_record import append_row_to_csv
+except Exception:  # pragma: no cover - fallback if module missing
+    append_row_to_csv = None
 # Assuming draw.py (or utils/draw.py) contains SkeletonDrawError
 # Based on user's last provided app.py, using utils.draw
 try:
@@ -458,19 +464,43 @@ def detect_pose_file_route():
         upload_time_start = time.monotonic()
         skeleton_url = upload_buffer(skeleton_buffer, cos_key) # From cos_uploader
         processing_times["upload_ms"] = (time.monotonic() - upload_time_start) * 1000
-        logger.info(f"骨架图上传完成 (poseId='{pose_id}'): 用时={processing_times['upload_ms']:.2f}ms, URL={skeleton_url}")
+        logger.info(
+            f"骨架图上传完成 (poseId='{pose_id}'): 用时={processing_times['upload_ms']:.2f}ms, URL={skeleton_url}"
+        )
 
         # Build and return success response
         # Total processing time for this specific block, not entire request yet
         block_total_time_ms = processing_times["detection_ms"] + processing_times["upload_ms"]
-        logger.info(f"Pose detection and upload for '{pose_id}' block total time: {block_total_time_ms:.2f}ms")
+        logger.info(
+            f"Pose detection and upload for '{pose_id}' block total time: {block_total_time_ms:.2f}ms"
+        )
 
-        return jsonify(ResponseBuilder.success(
-            score=score,
-            skeleton_url=skeleton_url,
-            pose_id=pose_id,
-            processingTimeMs=processing_times # Use more descriptive key
-        )), 200
+        # Save detection record to CSV (non-blocking)
+        try:
+            if append_row_to_csv:
+                csv_path = os.path.join(
+                    os.path.dirname(__file__), "data_lists", "all_images.csv"
+                )
+                append_row_to_csv(
+                    csv_path,
+                    {
+                        "file": os.path.basename(cos_key),
+                        "label": pose_id,
+                        "score": score,
+                        "url": skeleton_url,
+                    },
+                )
+        except Exception as csv_err:
+            logger.warning(f"记录检测结果到CSV失败: {csv_err}")
+
+        return jsonify(
+            ResponseBuilder.success(
+                score=score,
+                skeleton_url=skeleton_url,
+                pose_id=pose_id,
+                processingTimeMs=processing_times,  # Use more descriptive key
+            )
+        ), 200
 
     except NoKeypointError as e:
         logger.info(f"未检测到关键点 (poseId='{pose_id}'): {e}")
