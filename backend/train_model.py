@@ -38,6 +38,9 @@ import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
 
+# 🔄 unified dataset migration
+DATASET_DIR = "dataset/train"
+
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -126,90 +129,60 @@ def load_image_with_metadata(img_path: Path, file_to_data: dict, is_correct: boo
 
 
 def load_training_data(workers: int = 4) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """
-    Load all training data from CSV and image directories using parallel processing.
-    
-    Args:
-        workers: Number of parallel workers for image loading
-    
-    Returns:
-        Tuple of (images, scores, binary_labels)
+    """Load training data from ``DATASET_DIR`` recursively.
+
+    This version ignores the old ``training_data`` structure and assumes all
+    images reside under ``DATASET_DIR/<pose_id>``. Each image is treated as a
+    correct sample with score ``1.0``.
     """
     logger.info("=" * 60)
     logger.info("Starting data loading process...")
-    
-    # Load CSV data
+
+    # CSV bookkeeping (generate if missing)
     csv_path = "data_lists/all_images.csv"
     if not os.path.exists(csv_path):
-        raise FileNotFoundError(f"CSV file not found: {csv_path}")
-    
-    logger.info(f"Loading data from {csv_path}")
-    df = pd.read_csv(csv_path)
-    logger.info(f"Found {len(df)} entries in CSV")
-    
-    # Create a mapping from filename to data
-    file_to_data = {row['file']: (row['score'], row['label']) for _, row in df.iterrows()}
-    
-    # Define directories
-    correct_dir = Path("training_data/correct")
-    incorrect_dir = Path("training_data/incorrect")
-    
-    # Collect all image paths (supports subdirectories)
-    image_tasks = []
-    
-    if correct_dir.exists():
-        # Support both .png and .jpg files, recursively
-        correct_files = list(correct_dir.rglob("*.png")) + list(correct_dir.rglob("*.jpg"))
-        logger.info(f"Found {len(correct_files)} images in correct directory (including subdirectories)")
-        for img_path in correct_files:
-            image_tasks.append((img_path, True))
-    
-    if incorrect_dir.exists():
-        incorrect_files = list(incorrect_dir.rglob("*.png")) + list(incorrect_dir.rglob("*.jpg"))
-        logger.info(f"Found {len(incorrect_files)} images in incorrect directory (including subdirectories)")
-        for img_path in incorrect_files:
-            image_tasks.append((img_path, False))
-    
-    # Load images in parallel
-    logger.info(f"Loading {len(image_tasks)} images using {workers} workers...")
-    
-    results = []
+        logger.info(f"CSV not found at {csv_path}, generating via generate_image_list.py")
+        subprocess.run([sys.executable, "generate_image_list.py"], check=True)
+
+    if os.path.exists(csv_path):
+        df = pd.read_csv(csv_path)
+        logger.info(f"Loaded CSV with {len(df)} entries")
+
+    dataset_path = Path(DATASET_DIR)
+    image_paths: List[Path] = []
+    for pose_dir in sorted(dataset_path.iterdir()):
+        if not pose_dir.is_dir():
+            continue
+        for img_path in pose_dir.rglob("*"):
+            if img_path.suffix.lower() in (".jpg", ".jpeg", ".png"):
+                image_paths.append(img_path)
+
+    logger.info(f"Found {len(image_paths)} images in {DATASET_DIR}")
+    logger.info(f"Loading images using {workers} workers...")
+
+    images = []
     with ThreadPoolExecutor(max_workers=workers) as executor:
-        # Create partial function with file_to_data
-        load_func = partial(load_image_with_metadata, file_to_data=file_to_data)
-        
-        # Submit all tasks
-        future_to_task = {
-            executor.submit(load_func, img_path, is_correct): (img_path, is_correct)
-            for img_path, is_correct in image_tasks
-        }
-        
-        # Collect results with progress tracking
+        future_to_path = {executor.submit(load_and_preprocess_image, p): p for p in image_paths}
         loaded_count = 0
-        for future in as_completed(future_to_task):
-            result = future.result()
-            if result is not None:
-                results.append(result)
+        for future in as_completed(future_to_path):
+            img_array = future.result()
+            if img_array is not None:
+                images.append(img_array)
                 loaded_count += 1
                 if loaded_count % 100 == 0:
-                    logger.info(f"Loaded {loaded_count}/{len(image_tasks)} images...")
-    
-    if not results:
+                    logger.info(f"Loaded {loaded_count}/{len(image_paths)} images...")
+
+    if not images:
         raise ValueError("No images were successfully loaded!")
-    
-    # Unpack results
-    images, scores, binary_labels = zip(*results)
-    
-    # Convert to numpy arrays
+
+    scores = np.full(len(images), 1.0, dtype=np.float32)
+    binary_labels = np.ones(len(images), dtype=np.float32)
+
     images = np.array(images)
-    scores = np.array(scores, dtype=np.float32)
-    binary_labels = np.array(binary_labels, dtype=np.float32)
-    
+
     logger.info(f"Successfully loaded {len(images)} images")
     logger.info(f"Images shape: {images.shape}")
-    logger.info(f"Score range: [{scores.min():.2f}, {scores.max():.2f}]")
-    logger.info(f"Binary label distribution: {np.sum(binary_labels == 1)} correct, {np.sum(binary_labels == 0)} incorrect")
-    
+
     return images, scores, binary_labels
 
 
@@ -480,7 +453,7 @@ def clear_training_data():
     logger.info("=" * 60)
     logger.info("Clearing training data...")
     
-    cleanup_script = "cos_tools/clear_training_data.py"
+    cleanup_script = "cos_tools/clear_dataset_images.py"
     
     if not os.path.exists(cleanup_script):
         logger.warning(f"Cleanup script not found at {cleanup_script}")
@@ -653,7 +626,7 @@ def main():
             sys.exit(1)
 
 def train_from_dataset(
-    dataset_dir='dataset/train',
+    dataset_dir=DATASET_DIR,
     model_out=None,
     epochs=2,
     batch_size=16,
