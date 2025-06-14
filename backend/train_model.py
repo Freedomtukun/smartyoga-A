@@ -287,18 +287,19 @@ def create_cnn_model(input_shape: Tuple[int, int, int], learning_rate: float = 0
     return model
 
 
-def plot_training_history(history, use_multi_head: bool = False):
+def plot_training_history(history, use_multi_head: bool = False, plots_dir: str = "training_plots"):
     """
     Plot and save training history graphs.
-    
+
     Args:
         history: Keras training history object
         use_multi_head: Whether this was a multi-head model
+        plots_dir: Directory to save the plots
     """
     logger.info("Generating training visualization...")
     
     # Create output directory
-    os.makedirs("training_plots", exist_ok=True)
+    os.makedirs(plots_dir, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     
     if use_multi_head:
@@ -364,7 +365,7 @@ def plot_training_history(history, use_multi_head: bool = False):
         ax2.grid(True)
     
     plt.tight_layout()
-    plot_path = f"training_plots/training_history_{timestamp}.png"
+    plot_path = os.path.join(plots_dir, f"training_history_{timestamp}.png")
     plt.savefig(plot_path, dpi=150)
     plt.close()
     
@@ -650,32 +651,62 @@ def main():
 
 def train_from_dataset(
     dataset_dir='dataset/train',
-    model_out='models/yoga_pose_score_regression.h5',
+    model_out=None,
     epochs=2,
     batch_size=16,
     workers=4,
     learning_rate=0.001,
     validation_split=0.1,
     use_multi_head=False,
-    email_pass=None
+    email_pass=None,
+    mode='image_classification',
+    plots_dir=None
 ):
     """
     兼容自动训练流程的外部调用接口（不依赖命令行），直接拉通主控脚本
+
+    Args:
+        dataset_dir: Dataset directory (currently unused)
+        model_out: Optional path to save the trained model
+        epochs: Training epochs
+        batch_size: Batch size
+        workers: Parallel workers for data loading
+        learning_rate: Learning rate
+        validation_split: Validation split ratio
+        use_multi_head: Whether to use multi-head model
+        email_pass: Gmail password for notifications
+        mode: Training mode ("image_classification" or "sequence_lstm")
+        plots_dir: Optional directory to save training plots
     """
     try:
         logger.info("=" * 60)
         logger.info("Auto pipeline trigger: train_from_dataset() called.")
-        images, scores, binary_labels = load_training_data(workers=workers)
-        model, history = train_model(
-            images, scores, binary_labels,
-            epochs=epochs,
-            batch_size=batch_size,
-            learning_rate=learning_rate,
-            validation_split=validation_split,
-            use_multi_head=use_multi_head
-        )
+
+        if mode == 'image_classification':
+            images, scores, binary_labels = load_training_data(workers=workers)
+            model, history = train_model(
+                images, scores, binary_labels,
+                epochs=epochs,
+                batch_size=batch_size,
+                learning_rate=learning_rate,
+                validation_split=validation_split,
+                use_multi_head=use_multi_head
+            )
+        elif mode == 'sequence_lstm':
+            raise NotImplementedError("sequence_lstm \u6a21\u5f0f\u6682\u672a\u5b9e\u73b0")
+        else:
+            raise ValueError(f"Unknown mode: {mode}")
+
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        if not model_out:
+            os.makedirs(f"models/{mode}", exist_ok=True)
+            model_out = f"models/{mode}/model_{ts}.h5"
+        if not plots_dir:
+            os.makedirs(f"training_plots/{mode}", exist_ok=True)
+            plots_dir = f"training_plots/{mode}"
+
         save_model(model, model_path=model_out)
-        plot_training_history(history.history, use_multi_head=use_multi_head)
+        plot_training_history(history.history, use_multi_head=use_multi_head, plots_dir=plots_dir)
         clear_training_data()
         send_email_notification(
             success=True,
