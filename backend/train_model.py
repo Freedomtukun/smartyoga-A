@@ -472,10 +472,17 @@ def save_model(model: keras.Model, model_path: str = "models/yoga_pose_score_reg
     model.save(model_path)
     logger.info(f"Model saved to: {model_path}")
     
-    # Also save in SavedModel format for better compatibility
-    saved_model_path = model_path.replace('.h5', '_saved_model')
+    # Also save a copy with clear extension for Keras format
+    saved_model_path = model_path.replace('.h5', '_saved_model.keras')
     model.save(saved_model_path)
-    logger.info(f"Model also saved in SavedModel format to: {saved_model_path}")
+    logger.info(
+        f"Model also saved in Keras format to: {saved_model_path}")
+
+    # Export TensorFlow SavedModel directory
+    export_dir = model_path.replace('.h5', '_saved_model')
+    model.export(export_dir)
+    logger.info(
+        f"TensorFlow SavedModel exported to: {export_dir}")
 
 
 def clear_training_data():
