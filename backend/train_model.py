@@ -648,6 +648,49 @@ def main():
         if not training_success:
             sys.exit(1)
 
+def train_from_dataset(
+    dataset_dir='dataset/train',
+    model_out='models/yoga_pose_score_regression.h5',
+    epochs=2,
+    batch_size=16,
+    workers=4,
+    learning_rate=0.001,
+    validation_split=0.1,
+    use_multi_head=False,
+    email_pass=None
+):
+    """
+    兼容自动训练流程的外部调用接口（不依赖命令行），直接拉通主控脚本
+    """
+    try:
+        logger.info("=" * 60)
+        logger.info("Auto pipeline trigger: train_from_dataset() called.")
+        images, scores, binary_labels = load_training_data(workers=workers)
+        model, history = train_model(
+            images, scores, binary_labels,
+            epochs=epochs,
+            batch_size=batch_size,
+            learning_rate=learning_rate,
+            validation_split=validation_split,
+            use_multi_head=use_multi_head
+        )
+        save_model(model, model_path=model_out)
+        plot_training_history(history.history, use_multi_head=use_multi_head)
+        clear_training_data()
+        send_email_notification(
+            success=True,
+            gmail_pass=email_pass
+        )
+        logger.info("✅ train_from_dataset finished successfully!")
+    except Exception as e:
+        logger.error(f"❌ Error in train_from_dataset: {e}")
+        send_email_notification(
+            success=False,
+            error_message=str(e),
+            gmail_pass=email_pass
+        )
+        raise
 
 if __name__ == "__main__":
     main()
+
