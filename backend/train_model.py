@@ -474,7 +474,7 @@ def save_model(model: keras.Model, model_path: str = "models/yoga_pose_score_reg
     
     # Also save in SavedModel format for better compatibility
     saved_model_path = model_path.replace('.h5', '_saved_model')
-    model.save(saved_model_path, save_format='tf')
+    model.save(saved_model_path)
     logger.info(f"Model also saved in SavedModel format to: {saved_model_path}")
 
 
