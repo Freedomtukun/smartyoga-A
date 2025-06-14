@@ -666,6 +666,7 @@ def train_from_dataset(
     plots_dir=None
 ):
     """
+    自动训练管道专用，供云端/定时任务/触发器自动调用，无需人工干预。
     兼容自动训练流程的外部调用接口（不依赖命令行），直接拉通主控脚本
 
     Args:
@@ -727,4 +728,3 @@ def train_from_dataset(
 
 if __name__ == "__main__":
     main()
-
