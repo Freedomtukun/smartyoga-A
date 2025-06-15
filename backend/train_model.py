@@ -150,7 +150,7 @@ def load_training_data(workers: int = 4) -> Tuple[np.ndarray, np.ndarray, np.nda
     csv_path = "data_lists/all_images.csv"
     if not os.path.exists(csv_path):
         logger.info("CSV 不存在，调用 generate_image_list.py 重新生成…")
-        subprocess.run([sys.executable, "generate_image_list.py"], check=True)
+        subprocess.run([sys.executable, "cos_tools/generate_image_list.py"], check=True)
 
     # 映射：文件名 → 分数；若无分数列则默认 1.0
     score_map = {}
