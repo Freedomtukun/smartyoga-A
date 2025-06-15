@@ -136,12 +136,17 @@ def load_image_with_metadata(img_path: Path, file_to_data: dict, is_correct: boo
     return None
 
 
-def load_training_data(workers: int = 4) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def load_training_data(workers: int = 4, max_images: int = None) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Load training data from ``DATASET_DIR`` recursively.
 
     This version ignores the old ``training_data`` structure and assumes all
     images reside under ``DATASET_DIR/<pose_id>``. Each image is treated as a
     correct sample with score ``1.0``.
+
+    Args:
+        workers: Number of parallel workers for loading images.
+        max_images: Optional limit on the number of images to load. ``None``
+            means no limit.
     """
     logger.info("=" * 60)
     logger.info("Starting data loading process...")
@@ -169,6 +174,8 @@ def load_training_data(workers: int = 4) -> Tuple[np.ndarray, np.ndarray, np.nda
             continue
         for img_path in pose_dir.rglob("*"):
             if img_path.suffix.lower() in (".jpg", ".jpeg", ".png"):
+                if max_images is not None and len(image_paths) >= max_images:
+                    break
                 image_paths.append(img_path)
 
     logger.info(f"Found {len(image_paths)} images in {DATASET_DIR}")
@@ -621,7 +628,10 @@ def main():
     
     try:
         # Load training data
-        images, scores, binary_labels = load_training_data(workers=args.workers)
+        images, scores, binary_labels = load_training_data(
+            workers=args.workers,
+            max_images=2000
+        )
         
         # Train model
         model, history = train_model(
