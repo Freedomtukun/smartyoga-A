@@ -160,7 +160,7 @@ def load_training_data(workers: int = 4, max_images: int = None) -> Tuple[np.nda
     # 映射：文件名 → 分数；若无分数列则默认 1.0
     score_map = {}
     if os.path.exists(csv_path):
-        df = pd.read_csv(csv_path)
+        df = pd.read_csv(csv_path, on_bad_lines='skip')
         if "score" in df.columns:
             score_map = {row["file"]: float(row["score"]) for _, row in df.iterrows()}
         logger.info(
