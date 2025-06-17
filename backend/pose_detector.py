@@ -630,3 +630,110 @@ def get_pose_info(pose_id: str) -> Optional[Dict[str, Any]]:
         **{k: v for k, v in pose_meta_config.items() if k not in ["id", "pose_id", "name", "description", "difficulty"]},
         "target_angles": target_angles_for_pose
     }
+
+
+# ================================================================
+#  分类模型推理与统一分析接口（新增功能，保持向下兼容）
+# ================================================================
+
+_CLASSIFY_MODEL = None
+_CLASS_LABELS: List[str] = []
+
+
+def _load_classify_resources() -> None:
+    """内部函数：延迟加载分类模型及标签。"""
+    global _CLASSIFY_MODEL, _CLASS_LABELS
+
+    if _CLASSIFY_MODEL is None:
+        try:
+            from tensorflow import keras  # 延迟导入，避免无此依赖时影响其他功能
+        except Exception as exc:  # pragma: no cover - 环境可能缺少TensorFlow
+            logger.error(f"无法导入 TensorFlow Keras，分类功能不可用: {exc}")
+            return
+
+        model_path = os.path.join(
+            os.path.dirname(__file__), "..", "models", "classify", "classify_model.h5"
+        )
+        if os.path.exists(model_path):
+            try:
+                _CLASSIFY_MODEL = keras.models.load_model(model_path)
+                logger.info(f"分类模型已加载: {model_path}")
+            except Exception as exc:
+                logger.error(f"加载分类模型失败: {exc}")
+        else:
+            logger.warning(f"未找到分类模型文件: {model_path}")
+
+    if not _CLASS_LABELS:
+        labels_path = os.path.join(
+            os.path.dirname(__file__), "..", "models", "classify", "class_labels.txt"
+        )
+        if os.path.exists(labels_path):
+            try:
+                with open(labels_path, "r", encoding="utf-8") as f:
+                    _CLASS_LABELS = [line.strip() for line in f if line.strip()]
+                logger.info(f"已加载 {len(_CLASS_LABELS)} 条姿势标签")
+            except Exception as exc:
+                logger.error(f"读取分类标签文件失败: {exc}")
+        else:
+            logger.warning(f"未找到分类标签文件: {labels_path}")
+
+
+def predict_pose_class(image_bgr: "np.ndarray") -> str:
+    """根据输入BGR图片预测姿势ID，置信度低于0.5时返回 'unknown'。"""
+    _load_classify_resources()
+
+    if _CLASSIFY_MODEL is None or not _CLASS_LABELS:
+        logger.warning("分类模型或标签未就绪，返回 'unknown'")
+        return "unknown"
+
+    if image_bgr is None:
+        logger.error("predict_pose_class 收到无效的图像输入")
+        return "unknown"
+
+    try:
+        import cv2  # 延迟导入避免无此依赖时影响其他功能
+        import numpy as np
+
+        img_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+        img_resized = cv2.resize(img_rgb, (224, 224))
+        input_data = img_resized.astype("float32") / 255.0
+        input_data = np.expand_dims(input_data, axis=0)
+
+        predictions = _CLASSIFY_MODEL.predict(input_data)
+        probs = predictions[0] if predictions.ndim > 1 else predictions
+        best_index = int(np.argmax(probs))
+        confidence = float(probs[best_index])
+
+        if confidence < 0.5 or best_index >= len(_CLASS_LABELS):
+            return "unknown"
+        return _CLASS_LABELS[best_index]
+    except Exception as exc:  # pragma: no cover - 运行时可能出现异常
+        logger.error(f"分类模型推理失败: {exc}", exc_info=True)
+        return "unknown"
+
+
+def analyze(image_bgr: "np.ndarray") -> Dict[str, Any]:
+    """可选的统一分析接口，组合分类与评分结果。"""
+    result = {
+        "pose_id": "unknown",
+        "score": 0.0,
+        "feedback_type": "unknown",
+        "audio_url": "unknown",
+    }
+
+    pose_id = predict_pose_class(image_bgr)
+    result["pose_id"] = pose_id
+
+    if pose_id != "unknown":
+        try:
+            import cv2
+
+            ok, buf = cv2.imencode(".jpg", image_bgr)
+            if ok:
+                score, _ = detect_pose(buf.tobytes(), pose_id)
+                result["score"] = score
+        except Exception as exc:  # pragma: no cover - 捕获推理异常
+            logger.error(f"分析评分失败: {exc}")
+
+    return result
+
