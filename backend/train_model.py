@@ -44,7 +44,7 @@ import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
 
 # 🔄 unified dataset migration
-DATASET_DIR = "dataset/train"
+DATASET_DIR = "dataset/image_pool"
 
 import tensorflow as tf
 from tensorflow import keras
@@ -630,7 +630,7 @@ def main():
         # Load training data
         images, scores, binary_labels = load_training_data(
             workers=args.workers,
-            max_images=2000
+            max_images=8000
         )
         
         # Train model
