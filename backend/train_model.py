@@ -14,6 +14,9 @@ Usage:
 """
 
 import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+print("使用 CPU 进行评分训练")
+
 import sys
 import subprocess
 import logging
