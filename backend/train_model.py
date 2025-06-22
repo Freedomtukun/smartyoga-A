@@ -90,6 +90,7 @@ def parse_arguments():
     parser.add_argument('--learning-rate', type=float, default=0.001, help='Learning rate (default: 0.001)')
     parser.add_argument('--validation-split', type=float, default=0.1, help='Validation split ratio (default: 0.1)')
     parser.add_argument('--email-pass', type=str, default=None, help='Gmail password for notifications (or set GOOGLE_MAIL_PASS env var)')
+    parser.add_argument('--max-images', type=int, default=None, help='最大训练图片数限制')
     
     return parser.parse_args()
 
@@ -628,6 +629,7 @@ def main():
     logger.info(f"- Learning rate: {args.learning_rate}")
     logger.info(f"- Validation split: {args.validation_split}")
     logger.info(f"- Multi-head model: {args.multi_head}")
+    logger.info(f"- Max images: {args.max_images}")
     
     training_success = False
     error_message = ""
@@ -636,7 +638,7 @@ def main():
         # Load training data
         images, scores, binary_labels = load_training_data(
             workers=args.workers,
-            max_images=8000
+            max_images=args.max_images
         )
         
         # Train model
