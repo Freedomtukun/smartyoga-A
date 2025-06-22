@@ -736,4 +736,3 @@ def analyze(image_bgr: "np.ndarray") -> Dict[str, Any]:
             logger.error(f"分析评分失败: {exc}")
 
     return result
-
