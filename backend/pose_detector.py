@@ -6,6 +6,8 @@ import logging
 import math
 import os
 import time
+from tensorflow import keras
+import threading
 from dataclasses import dataclass, field
 from enum import Enum
 from io import BytesIO
@@ -56,6 +58,13 @@ except ImportError:
 # poses.json 路径，可通过环境变量覆盖
 _DEFAULT_POSES_PATH = os.path.join(os.path.dirname(__file__), "poses.json")
 POSES_FILE_PATH = os.environ.get("POSES_FILE_PATH", _DEFAULT_POSES_PATH)
+
+SCORE_MODEL_PATH    = os.getenv("SCORE_MODEL_PATH",    "models/score/latest_model.h5")
+CLASSIFY_MODEL_PATH = os.getenv("CLASSIFY_MODEL_PATH", "models/classify/latest_model.h5")
+
+_model_lock     = threading.Lock()
+_score_model    = None
+_classify_model = None
 
 # 全局变量，存储处理后的、保证为字典类型的支持姿势配置
 _SUPPORTED_POSES_REGISTRY: Dict[str, Dict[str, Any]] = {}
@@ -121,6 +130,27 @@ print("【后端 ANGLE_CONFIG_DATA 支持体式数量】: ", len(ANGLE_CONFIG_DA
 print("【后端 ANGLE_CONFIG_DATA 支持体式 key】: ", list(ANGLE_CONFIG_DATA.keys()))
 print("【后端 _SUPPORTED_POSES_REGISTRY 支持体式数量】: ", len(_SUPPORTED_POSES_REGISTRY))
 print("【后端 _SUPPORTED_POSES_REGISTRY 支持体式 key】: ", list(_SUPPORTED_POSES_REGISTRY.keys()))
+
+
+def _lazy_load():
+    global _score_model, _classify_model
+    with _model_lock:
+        if _score_model is None and os.path.exists(SCORE_MODEL_PATH):
+            logging.info(f"🔄 加载评分模型: {SCORE_MODEL_PATH}")
+            _score_model = keras.models.load_model(SCORE_MODEL_PATH)
+        if _classify_model is None and os.path.exists(CLASSIFY_MODEL_PATH):
+            logging.info(f"🔄 加载分类模型: {CLASSIFY_MODEL_PATH}")
+            _classify_model = keras.models.load_model(CLASSIFY_MODEL_PATH)
+
+
+def reload_models():
+    """供外部热更新调用"""
+    global _score_model, _classify_model
+    with _model_lock:
+        _score_model = keras.models.load_model(SCORE_MODEL_PATH)
+        _classify_model = keras.models.load_model(CLASSIFY_MODEL_PATH)
+    logging.info("✅ 模型已热更新")
+    return "reloaded"
 
 
 class ErrorCode(Enum):
@@ -396,6 +426,7 @@ def detect_pose(
     核心姿势检测函数。
     接收图片字节流和姿势ID，返回评分和生成的骨架图（内存中）。
     """
+    _lazy_load()
     overall_start_time = time.monotonic()
     timing_stats: Dict[str, float] = {}
 
@@ -636,32 +667,17 @@ def get_pose_info(pose_id: str) -> Optional[Dict[str, Any]]:
 #  分类模型推理与统一分析接口（新增功能，保持向下兼容）
 # ================================================================
 
-_CLASSIFY_MODEL = None
 _CLASS_LABELS: List[str] = []
 
 
 def _load_classify_resources() -> None:
     """内部函数：延迟加载分类模型及标签。"""
-    global _CLASSIFY_MODEL, _CLASS_LABELS
+    global _classify_model, _CLASS_LABELS
 
-    if _CLASSIFY_MODEL is None:
-        try:
-            from tensorflow import keras  # 延迟导入，避免无此依赖时影响其他功能
-        except Exception as exc:  # pragma: no cover - 环境可能缺少TensorFlow
-            logger.error(f"无法导入 TensorFlow Keras，分类功能不可用: {exc}")
+    if _classify_model is None:
+        _lazy_load()
+        if _classify_model is None:
             return
-
-        model_path = os.path.join(
-            os.path.dirname(__file__), "..", "models", "classify", "classify_model.h5"
-        )
-        if os.path.exists(model_path):
-            try:
-                _CLASSIFY_MODEL = keras.models.load_model(model_path)
-                logger.info(f"分类模型已加载: {model_path}")
-            except Exception as exc:
-                logger.error(f"加载分类模型失败: {exc}")
-        else:
-            logger.warning(f"未找到分类模型文件: {model_path}")
 
     if not _CLASS_LABELS:
         labels_path = os.path.join(
@@ -680,9 +696,10 @@ def _load_classify_resources() -> None:
 
 def predict_pose_class(image_bgr: "np.ndarray") -> str:
     """根据输入BGR图片预测姿势ID，置信度低于0.5时返回 'unknown'。"""
+    _lazy_load()
     _load_classify_resources()
 
-    if _CLASSIFY_MODEL is None or not _CLASS_LABELS:
+    if _classify_model is None or not _CLASS_LABELS:
         logger.warning("分类模型或标签未就绪，返回 'unknown'")
         return "unknown"
 
@@ -699,7 +716,7 @@ def predict_pose_class(image_bgr: "np.ndarray") -> str:
         input_data = img_resized.astype("float32") / 255.0
         input_data = np.expand_dims(input_data, axis=0)
 
-        predictions = _CLASSIFY_MODEL.predict(input_data)
+        predictions = _classify_model.predict(input_data)
         probs = predictions[0] if predictions.ndim > 1 else predictions
         best_index = int(np.argmax(probs))
         confidence = float(probs[best_index])
