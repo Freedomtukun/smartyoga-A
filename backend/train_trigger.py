@@ -85,6 +85,13 @@ with open(log_path,"a",encoding="utf-8") as fp:
                 if ok:
                     log("✅ 评分模型训练成功", fp)
                     sync_latest("models/score", "score", "latest_model.h5", fp)
+                    import requests, traceback
+                    try:
+                        requests.post("http://127.0.0.1:5000/api/reload_model", timeout=3)
+                        print("🔔 已通知后端热更新模型")
+                    except Exception as e:
+                        traceback.print_exc()
+                        print("⚠️ 通知后端热更新失败，可等待下次 Gunicorn 重启")
                     break
                 retry += 1
                 log(f"❌ 评分模型第 {retry} 次失败", fp)
@@ -104,6 +111,13 @@ with open(log_path,"a",encoding="utf-8") as fp:
         if safe_run(cmd, fp):
             log("✅ 分类模型训练成功", fp)
             sync_latest("models/classify", "classify", "latest_model.h5", fp)
+            import requests, traceback
+            try:
+                requests.post("http://127.0.0.1:5000/api/reload_model", timeout=3)
+                print("🔔 已通知后端热更新模型")
+            except Exception as e:
+                traceback.print_exc()
+                print("⚠️ 通知后端热更新失败，可等待下次 Gunicorn 重启")
         else:
             log("❌ 分类模型训练失败", fp)
 

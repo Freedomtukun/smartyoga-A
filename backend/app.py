@@ -22,6 +22,7 @@ from PIL import Image, UnidentifiedImageError # Added for image validation
 
 from pose_detector import (
     detect_pose,
+    reload_models,
     PoseDetectionError,
     NoKeypointError,
     InvalidPoseError,
@@ -638,6 +639,11 @@ def list_supported_poses_route():
     except Exception as e:
         logger.error(f"获取支持的姿势列表失败: {e}\n{traceback.format_exc()}")
         return jsonify(ResponseBuilder.error("SUPPORTED_POSES_FETCH_ERROR", "获取支持的姿势列表时发生内部错误。")), 500
+
+
+@app.route("/api/reload_model", methods=["POST"])
+def api_reload_model():
+    return reload_models()
 
 
 # ======================== 启动函数 ========================
