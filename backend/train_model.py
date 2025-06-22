@@ -32,6 +32,7 @@ from pathlib import Path
 from typing import Tuple, List, Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import partial
+import random
 
 import numpy as np
 import pandas as pd
@@ -177,9 +178,11 @@ def load_training_data(workers: int = 4, max_images: int = None) -> Tuple[np.nda
             continue
         for img_path in pose_dir.rglob("*"):
             if img_path.suffix.lower() in (".jpg", ".jpeg", ".png"):
-                if max_images is not None and len(image_paths) >= max_images:
-                    break
                 image_paths.append(img_path)
+
+    if max_images is not None:
+        random.shuffle(image_paths)
+        image_paths = image_paths[:max_images]
 
     logger.info(f"Found {len(image_paths)} images in {DATASET_DIR}")
     logger.info(f"Loading images using {workers} workers...")
