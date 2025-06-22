@@ -691,7 +691,8 @@ def train_from_dataset(
     use_multi_head=False,
     email_pass=None,
     mode='image_classification',
-    plots_dir=None
+    plots_dir=None,
+    max_images=None
 ):
     """
     自动训练管道专用，供云端/定时任务/触发器自动调用，无需人工干预。
@@ -709,13 +710,22 @@ def train_from_dataset(
         email_pass: Gmail password for notifications
         mode: Training mode ("image_classification" or "sequence_lstm")
         plots_dir: Optional directory to save training plots
+        max_images: Optional limit on images loaded for training. ``None`` means
+            no limit.
     """
     try:
         logger.info("=" * 60)
         logger.info("Auto pipeline trigger: train_from_dataset() called.")
 
         if mode == 'image_classification':
-            images, scores, binary_labels = load_training_data(workers=workers)
+            images, scores, binary_labels = load_training_data(
+                workers=workers,
+                max_images=max_images
+            )
+            if max_images is not None:
+                images = images[:max_images]
+                scores = scores[:max_images]
+                binary_labels = binary_labels[:max_images]
             model, history = train_model(
                 images, scores, binary_labels,
                 epochs=epochs,
