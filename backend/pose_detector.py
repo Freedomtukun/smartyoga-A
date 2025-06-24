@@ -803,3 +803,30 @@ def analyze(image_bgr: "np.ndarray") -> Dict[str, Any]:
             logger.error(f"分析评分失败: {exc}")
 
     return result
+
+def get_pose_keypoints(image: "np.ndarray") -> Optional[List[Dict[str, float]]]:
+    """Detect pose keypoints using MediaPipe.
+
+    Args:
+        image (np.ndarray): BGR image read by cv2.
+
+    Returns:
+        Optional[List[Dict[str, float]]]: first 17 COCO keypoints or None.
+    """
+    try:
+        import cv2
+        import mediapipe as mp
+    except Exception as exc:
+        logger.error(f"依赖加载失败: {exc}")
+        return None
+
+    if image is None:
+        return None
+
+    img_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    with mp.solutions.pose.Pose(static_image_mode=True, model_complexity=1) as pose:
+        results = pose.process(img_rgb)
+        if not results.pose_landmarks:
+            return None
+        landmarks = results.pose_landmarks.landmark[:17]
+        return [{"x": float(lm.x), "y": float(lm.y)} for lm in landmarks]
