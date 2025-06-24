@@ -59,17 +59,75 @@ except ImportError:
 _DEFAULT_POSES_PATH = os.path.join(os.path.dirname(__file__), "poses.json")
 POSES_FILE_PATH = os.environ.get("POSES_FILE_PATH", _DEFAULT_POSES_PATH)
 
-SCORE_MODEL_PATH    = os.getenv("SCORE_MODEL_PATH",    "models/score/latest_model.h5")
+# ======================== 模型路径配置 ========================
+SCORE_MODEL_PATH = os.getenv("SCORE_MODEL_PATH", "models/score/latest_model.h5")
 CLASSIFY_MODEL_PATH = os.getenv("CLASSIFY_MODEL_PATH", "models/classify/latest_model.h5")
 
-_model_lock     = threading.Lock()
-_score_model    = None
+# ======================== 全局模型管理 ========================
+_model_lock = threading.Lock()
+_score_model = None
 _classify_model = None
 
 # 全局变量，存储处理后的、保证为字典类型的支持姿势配置
 _SUPPORTED_POSES_REGISTRY: Dict[str, Dict[str, Any]] = {}
 
-# 姿势元数据加载
+# ======================== 模型懒加载和热重载 ========================
+def _lazy_load():
+    """线程安全的延迟加载最新模型权重"""
+    global _score_model, _classify_model
+    with _model_lock:
+        if _score_model is None and os.path.exists(SCORE_MODEL_PATH):
+            logger.info(f"🔄 加载评分模型: {SCORE_MODEL_PATH}")
+            try:
+                _score_model = keras.models.load_model(SCORE_MODEL_PATH)
+            except Exception as e:
+                logger.error(f"加载评分模型失败: {e}")
+        
+        if _classify_model is None and os.path.exists(CLASSIFY_MODEL_PATH):
+            logger.info(f"🔄 加载分类模型: {CLASSIFY_MODEL_PATH}")
+            try:
+                _classify_model = keras.models.load_model(CLASSIFY_MODEL_PATH)
+            except Exception as e:
+                logger.error(f"加载分类模型失败: {e}")
+
+
+def reload_models():
+    """供外部热更新调用"""
+    global _score_model, _classify_model
+    results = {"status": "success", "details": {}}
+    
+    with _model_lock:
+        # 重载评分模型
+        if os.path.exists(SCORE_MODEL_PATH):
+            try:
+                logger.info(f"♻️ 重载评分模型: {SCORE_MODEL_PATH}")
+                _score_model = keras.models.load_model(SCORE_MODEL_PATH)
+                results["details"]["score_model"] = "reloaded"
+            except Exception as e:
+                logger.error(f"重载评分模型失败: {e}")
+                results["details"]["score_model"] = f"error: {str(e)}"
+                results["status"] = "partial_failure"
+        else:
+            results["details"]["score_model"] = "file_not_found"
+        
+        # 重载分类模型
+        if os.path.exists(CLASSIFY_MODEL_PATH):
+            try:
+                logger.info(f"♻️ 重载分类模型: {CLASSIFY_MODEL_PATH}")
+                _classify_model = keras.models.load_model(CLASSIFY_MODEL_PATH)
+                results["details"]["classify_model"] = "reloaded"
+            except Exception as e:
+                logger.error(f"重载分类模型失败: {e}")
+                results["details"]["classify_model"] = f"error: {str(e)}"
+                results["status"] = "partial_failure"
+        else:
+            results["details"]["classify_model"] = "file_not_found"
+    
+    logger.info(f"✅ 模型热更新完成: {results}")
+    return results
+
+
+# ======================== 姿势元数据加载 ========================
 def _load_pose_definitions(file_path: str) -> Dict[str, Dict[str, Any]]:
     """从 JSON 文件加载姿势定义并转换为以 pose_id 为键的字典。"""
     if not os.path.exists(file_path):
@@ -97,6 +155,7 @@ def _load_pose_definitions(file_path: str) -> Dict[str, Dict[str, Any]]:
         logger.error(f"Invalid pose definition format: {type(data)}")
     return processed
 
+
 def _initialize_supported_poses():
     """
     初始化 _SUPPORTED_POSES_REGISTRY，确保其为字典格式。
@@ -123,6 +182,7 @@ def _initialize_supported_poses():
     if not isinstance(ANGLE_CONFIG_DATA, dict):
         logger.error(f"angle_config.angle_config (即 ANGLE_CONFIG_DATA) 不是字典类型，而是 {type(ANGLE_CONFIG_DATA)}。这将影响目标角度的获取。")
 
+
 # 在模块加载时执行初始化
 _initialize_supported_poses()
 
@@ -132,27 +192,7 @@ print("【后端 _SUPPORTED_POSES_REGISTRY 支持体式数量】: ", len(_SUPPOR
 print("【后端 _SUPPORTED_POSES_REGISTRY 支持体式 key】: ", list(_SUPPORTED_POSES_REGISTRY.keys()))
 
 
-def _lazy_load():
-    global _score_model, _classify_model
-    with _model_lock:
-        if _score_model is None and os.path.exists(SCORE_MODEL_PATH):
-            logging.info(f"🔄 加载评分模型: {SCORE_MODEL_PATH}")
-            _score_model = keras.models.load_model(SCORE_MODEL_PATH)
-        if _classify_model is None and os.path.exists(CLASSIFY_MODEL_PATH):
-            logging.info(f"🔄 加载分类模型: {CLASSIFY_MODEL_PATH}")
-            _classify_model = keras.models.load_model(CLASSIFY_MODEL_PATH)
-
-
-def reload_models():
-    """供外部热更新调用"""
-    global _score_model, _classify_model
-    with _model_lock:
-        _score_model = keras.models.load_model(SCORE_MODEL_PATH)
-        _classify_model = keras.models.load_model(CLASSIFY_MODEL_PATH)
-    logging.info("✅ 模型已热更新")
-    return "reloaded"
-
-
+# ======================== 错误定义 ========================
 class ErrorCode(Enum):
     """错误码枚举"""
     SUCCESS = "SUCCESS"
@@ -191,6 +231,7 @@ class InvalidPoseError(PoseDetectionError):
         super().__init__(message, ErrorCode.INVALID_POSE, details)
 
 
+# ======================== 数据结构 ========================
 @dataclass
 class DetectionConfig:
     """检测配置类"""
@@ -223,6 +264,7 @@ class PoseDetectionResult:
     timing_stats_ms: Dict[str, float]
 
 
+# ======================== 核心计算函数 ========================
 def calculate_angle(p1: List[float], p2: List[float], p3: List[float]) -> float:
     """计算由三个点p1-p2-p3形成的以p2为顶点的角度 (0-180度)。"""
     if not (isinstance(p1, (list, tuple)) and len(p1) >= 2 and
@@ -417,6 +459,7 @@ def validate_keypoints(keypoints_data: Any) -> Dict[str, List[float]]:
     return validated_keypoints
 
 
+# ======================== 主要检测函数 ========================
 def detect_pose(
     image_bytes: bytes,
     pose_id: str,
@@ -426,7 +469,9 @@ def detect_pose(
     核心姿势检测函数。
     接收图片字节流和姿势ID，返回评分和生成的骨架图（内存中）。
     """
+    # 确保模型已加载（懒加载）
     _lazy_load()
+    
     overall_start_time = time.monotonic()
     timing_stats: Dict[str, float] = {}
 
@@ -674,6 +719,7 @@ def _load_classify_resources() -> None:
     """内部函数：延迟加载分类模型及标签。"""
     global _classify_model, _CLASS_LABELS
 
+    # 模型加载已由 _lazy_load() 处理
     if _classify_model is None:
         _lazy_load()
         if _classify_model is None:
@@ -696,6 +742,7 @@ def _load_classify_resources() -> None:
 
 def predict_pose_class(image_bgr: "np.ndarray") -> str:
     """根据输入BGR图片预测姿势ID，置信度低于0.5时返回 'unknown'。"""
+    # 确保模型已加载
     _lazy_load()
     _load_classify_resources()
 
@@ -731,6 +778,9 @@ def predict_pose_class(image_bgr: "np.ndarray") -> str:
 
 def analyze(image_bgr: "np.ndarray") -> Dict[str, Any]:
     """可选的统一分析接口，组合分类与评分结果。"""
+    # 确保模型已加载
+    _lazy_load()
+    
     result = {
         "pose_id": "unknown",
         "score": 0.0,
