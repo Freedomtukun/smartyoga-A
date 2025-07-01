@@ -424,6 +424,11 @@ def detect_pose_file_route():
 
     try:
         image_bytes = uploaded_file.read()
+        # 保存为临时文件用于本地存储
+        import tempfile
+        tmp_fd, tmp_path = tempfile.mkstemp(suffix=".jpg")
+        with os.fdopen(tmp_fd, 'wb') as tmp_file:
+            tmp_file.write(image_bytes)
         if not image_bytes:
             logger.warning(f"上传的文件 '{uploaded_file.filename}' 内容为空。")
             return jsonify(ResponseBuilder.error("EMPTY_FILE", "上传的文件内容为空。", pose_id=pose_id)), 400
@@ -468,6 +473,12 @@ def detect_pose_file_route():
         logger.info(
             f"骨架图上传完成 (poseId='{pose_id}'): 用时={processing_times['upload_ms']:.2f}ms, URL={skeleton_url}"
         )
+        # 保存原图至本地图库（用于标注 / 模型训练）
+        try:
+            from utils.image_store import save_raw_image
+            save_raw_image(tmp_path, pose_id=pose_id, user_id="anon")
+        except Exception as store_err:
+            logger.warning(f"原图保存失败: {store_err}")
 
         # Build and return success response
         # Total processing time for this specific block, not entire request yet
@@ -521,6 +532,14 @@ def detect_pose_file_route():
     except Exception as e: # Catch-all for other unexpected errors during this specific processing block
         logger.error(f"处理姿势检测/上传时发生意外错误 (poseId='{pose_id}'): {traceback.format_exc()}")
         return jsonify(ResponseBuilder.error("UNEXPECTED_PROCESSING_ERROR", "处理您的请求时发生意外错误。", pose_id=pose_id)), 500
+
+    finally:
+        # 清理临时文件
+        try:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+        except Exception as cleanup_err:
+            logger.warning(f"临时文件清理失败: {cleanup_err}")
 
 
 @app.route('/api/detect-pose-batch', methods=['POST'])
