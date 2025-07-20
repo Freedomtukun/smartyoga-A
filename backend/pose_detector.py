@@ -7,6 +7,7 @@ import math
 import os
 import time
 from tensorflow import keras
+from tensorflow.keras.losses import MeanSquaredError
 import threading
 from dataclasses import dataclass, field
 from enum import Enum
@@ -79,7 +80,9 @@ def _lazy_load():
         if _score_model is None and os.path.exists(SCORE_MODEL_PATH):
             logger.info(f"🔄 加载评分模型: {SCORE_MODEL_PATH}")
             try:
-                _score_model = keras.models.load_model(SCORE_MODEL_PATH)
+                _score_model = keras.models.load_model(
+                    SCORE_MODEL_PATH, custom_objects={"mse": MeanSquaredError()}
+                )
             except Exception as e:
                 logger.error(f"加载评分模型失败: {e}")
         
@@ -101,7 +104,9 @@ def reload_models():
         if os.path.exists(SCORE_MODEL_PATH):
             try:
                 logger.info(f"♻️ 重载评分模型: {SCORE_MODEL_PATH}")
-                _score_model = keras.models.load_model(SCORE_MODEL_PATH)
+                _score_model = keras.models.load_model(
+                    SCORE_MODEL_PATH, custom_objects={"mse": MeanSquaredError()}
+                )
                 results["details"]["score_model"] = "reloaded"
             except Exception as e:
                 logger.error(f"重载评分模型失败: {e}")
